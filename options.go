@@ -1,4 +1,4 @@
-package labels
+package labeler
 
 func getOptions(opts []Option) *Options {
 	o := &Options{

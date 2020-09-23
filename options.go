@@ -1,18 +1,5 @@
 package labeler
 
-func getOptions(opts []Option) *Options {
-	o := &Options{
-		IgnoreCase:       true,
-		KeepLabels:       true,
-		RequireAllFields: false,
-		LabelsField:      "",
-	}
-	for _, opt := range opts {
-		opt(o)
-	}
-	return o
-}
-
 // Options are the configurable options allowed when Unmarshaling/Marshaling
 // Default options:
 // IgnoreCase: true,
@@ -46,6 +33,10 @@ type Options struct {
 	// Individual fields can override this setting at the field level by appending
 	// "required" or "notrequired", such as `label:"myField,notrequired"`
 	Default string
+
+	//default: true
+	//ErrOnUnableToSetLabels
+	ErrOnUnableToSetLabels bool
 }
 
 // Option is a function which accepts *Options, allowing for configuration
@@ -86,4 +77,27 @@ func RequireAllFields() Option {
 	return func(o *Options) {
 		o.RequireAllFields = true
 	}
+}
+
+// DoNotErrOnUnableToSetLabels prevents Unmarshal from returning an error if it is unable to assign
+//Labels via an interfacable map[string]string field marked with `labels:"*"`, implementing the Labeler or
+//StrictLabeler interfaces by having a method SetLabels(map[string]string) bool or SetLabels(map[string]string)
+// or by implementing Unmarshaler
+func DoNotErrOnUnableToSetLabels() Option {
+	return func(o *Options) {
+		o.ErrOnUnableToSetLabels = false
+	}
+}
+func getOptions(opts []Option) *Options {
+	o := &Options{
+		IgnoreCase:             true,
+		KeepLabels:             true,
+		RequireAllFields:       false,
+		LabelsField:            "",
+		ErrOnUnableToSetLabels: true,
+	}
+	for _, opt := range opts {
+		opt(o)
+	}
+	return o
 }

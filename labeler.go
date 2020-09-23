@@ -33,12 +33,12 @@ type Labeled interface {
 	GetLabels() map[string]string
 }
 
-// LabelerStrict is the interface implemented by types with a SetLabels method, which
+// StrictLabeler is the interface implemented by types with a SetLabels method, which
 // accepts map[string]string and handles assignment of those values, returning true if
 // successful or false if there were issues assigning the value.
 // An error will be returned from Marshal if v does not contain a tag with `label:"*"`,
 // have LabelsField set in Options, or implement either Labeler or Marshaler
-type LabelerStrict interface {
+type StrictLabeler interface {
 	SetLabels(map[string]string) bool
 }
 
@@ -119,6 +119,13 @@ func Unmarshal(labeled Labeled, v interface{}, opts ...Option) error {
 		fieldType := structField.Type
 		fieldName := structField.Name
 		fieldKind := fieldValue.Kind()
+
+		if !fieldValue.Addr().CanInterface() {
+			if _, ok := structField.Tag.Lookup("label"); ok {
+				errs = append(errs, NewFieldError(fieldName, ErrUnexportedField))
+			}
+			continue
+		}
 		iface := fieldValue.Addr().Interface()
 
 		// check to see if the field implements the Unmarshaler interface.
@@ -139,7 +146,12 @@ func Unmarshal(labeled Labeled, v interface{}, opts ...Option) error {
 			if !fieldValue.Addr().CanInterface() {
 				continue
 			}
-			err := Unmarshal(labeled, iface)
+			subOpts := []Option{}
+			for _, opt := range opts {
+				subOpts = append(subOpts, opt)
+			}
+			subOpts = append(subOpts, DoNotErrOnUnableToSetLabels())
+			err := Unmarshal(labeled, iface, subOpts...)
 			if err != nil {
 				var e *ParsingError
 				if errors.Is(err, ErrInvalidValue) {
@@ -259,14 +271,17 @@ func Unmarshal(labeled Labeled, v interface{}, opts ...Option) error {
 		if err != nil {
 			errs = append(errs, NewFieldError(containerField.Name, err))
 		}
-	} else if iface, ok := rvi.(LabelerStrict); ok {
-		if setOk := iface.SetLabels(labels); setOk {
+	} else if iface, ok := rvi.(StrictLabeler); ok {
+		setOk := iface.SetLabels(labels)
+		if !setOk && o.ErrOnUnableToSetLabels {
 			return ErrSettingLabels
 		}
 	} else if iface, ok := rvi.(Labeler); ok {
 		iface.SetLabels(labels)
 	} else {
-		return ErrSettingLabels
+		if o.ErrOnUnableToSetLabels {
+			return ErrSettingLabels
+		}
 	}
 
 	if len(errs) > 0 {
@@ -335,7 +350,7 @@ func parseTag(fieldName, tagStr string, o Options) (labelTag, error) {
 			tag.IsContainer = true
 		case "discard":
 			tag.Keep = false
-			tag.KeepWasSet = false
+			tag.KeepWasSet = true
 		case "keep":
 			tag.Keep = true
 		case "default":
@@ -373,13 +388,13 @@ func (field labelField) setValue(labels map[string]string, o Options) error {
 			}
 			return nil
 		}
-		if iface, ok := field.Interface.(LabelerStrict); ok {
+		if iface, ok := field.Interface.(StrictLabeler); ok {
 			if setOk := iface.SetLabels(labels); setOk {
 				return nil
 			}
 			return ErrSettingLabels
 		}
-		if iface, ok := field.Interface.(LabelerStrict); ok {
+		if iface, ok := field.Interface.(StrictLabeler); ok {
 			if setOk := iface.SetLabels(labels); !setOk {
 				return ErrSettingLabels
 			}
@@ -438,16 +453,16 @@ func (field labelField) setValue(labels map[string]string, o Options) error {
 
 	if iface, isStringee := field.Interface.(Stringee); isStringee {
 		if fromStringOk := iface.FromString(value); fromStringOk {
-			return handleSet(field.Name, labels, key, keep, nil)
+			return resolve(field.Name, labels, key, keep, nil)
 		}
 	}
 	if iface, ok := field.Interface.(StringeeStrict); ok {
 		err := iface.FromString(value)
-		return handleSet(field.Name, labels, key, keep, err)
+		return resolve(field.Name, labels, key, keep, err)
 	}
 	if iface, ok := field.Interface.(encoding.TextUnmarshaler); ok {
 		err := iface.UnmarshalText([]byte(value))
-		return handleSet(field.Name, labels, key, keep, err)
+		return resolve(field.Name, labels, key, keep, err)
 	}
 	switch field.Kind {
 	case reflect.Ptr:
@@ -464,39 +479,39 @@ func (field labelField) setValue(labels map[string]string, o Options) error {
 		}
 		err := ptrField.setValue(labels, o)
 		if err != nil {
-			return handleSet(field.Name, labels, key, keep, err)
+			return resolve(field.Name, labels, key, keep, err)
 		}
 		field.Value.Set(ptr)
-		return handleSet(field.Name, labels, key, keep, err)
+		return resolve(field.Name, labels, key, keep, err)
 	case reflect.String:
 		field.Value.SetString(value)
-		return handleSet(field.Name, labels, key, keep, nil)
+		return resolve(field.Name, labels, key, keep, nil)
 	case reflect.Bool:
 		v, err := strconv.ParseBool(value)
 		if err != nil {
-			return handleSet(field.Name, labels, key, keep, err)
+			return resolve(field.Name, labels, key, keep, err)
 		}
 		field.Value.SetBool(v)
-		return handleSet(field.Name, labels, key, keep, nil)
+		return resolve(field.Name, labels, key, keep, nil)
 
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		if field.Type.PkgPath() == "time" && field.Type.Name() == "Duration" {
 			duration, err := time.ParseDuration(value)
 			if err != nil {
-				return handleSet(field.Name, labels, key, keep, err)
+				return resolve(field.Name, labels, key, keep, err)
 			}
 			field.Value.Set(reflect.ValueOf(duration))
-			return handleSet(field.Name, labels, key, keep, err)
+			return resolve(field.Name, labels, key, keep, err)
 		}
 
 		v, err := strconv.Atoi(value)
 		if err != nil {
-			return handleSet(field.Name, labels, key, keep, err)
+			return resolve(field.Name, labels, key, keep, err)
 		}
 
 		field.Value.SetInt(int64(v))
 
-		return handleSet(field.Name, labels, key, keep, err)
+		return resolve(field.Name, labels, key, keep, err)
 
 	case reflect.Float32, reflect.Float64:
 		var v float64
@@ -507,18 +522,21 @@ func (field labelField) setValue(labels map[string]string, o Options) error {
 			v, err = strconv.ParseFloat(value, 64)
 		}
 		if err != nil {
-			return handleSet(field.Name, labels, key, keep, err)
+			return resolve(field.Name, labels, key, keep, err)
 		}
 		field.Value.SetFloat(float64(v))
-		return handleSet(field.Name, labels, key, keep, err)
+		return resolve(field.Name, labels, key, keep, err)
 	default:
-		return handleSet(field.Name, labels, key, keep, ErrUnsupportedType)
+		return resolve(field.Name, labels, key, keep, ErrUnsupportedType)
 	}
 }
 
-func handleSet(name string, labels map[string]string, key string, keep bool, err error) error {
+func resolve(name string, labels map[string]string, key string, keep bool, err error) error {
+	if err != nil {
+		return NewFieldError(name, err)
+	}
 	if !keep && err == nil {
 		delete(labels, key)
 	}
-	return NewFieldError(name, err)
+	return nil
 }

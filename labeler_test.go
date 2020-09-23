@@ -56,7 +56,7 @@ type InvalidDueTomissingLabels struct {
 	Enum MyEnum `label:"enum"`
 }
 
-type ValidBasicLabeler struct {
+type ValidBasic struct {
 	Name     string        `label:"name"`
 	Enum     MyEnum        `label:"enum"`
 	Float64  float64       `label:"float64"`
@@ -72,7 +72,7 @@ type ValidBasicLabeler struct {
 	Labels map[string]string
 }
 
-func (v *ValidBasicLabeler) SetLabels(l map[string]string) {
+func (v *ValidBasic) SetLabels(l map[string]string) {
 	v.Labels = l
 
 }
@@ -88,7 +88,8 @@ func TestInvalidDueToMissingLabels(t *testing.T) {
 	assert.Error(t, err, "Should have thrown an error")
 	t.Log(err)
 }
-func TestValidBasicLabeler(t *testing.T) {
+
+func TestValidBasic(t *testing.T) {
 
 	l := StructWithLabels{
 		Labels: map[string]string{
@@ -106,7 +107,7 @@ func TestValidBasicLabeler(t *testing.T) {
 		},
 	}
 
-	v := &ValidBasicLabeler{}
+	v := &ValidBasic{}
 	err := Unmarshal(l, v)
 	assert.NoError(t, err, "Should not have thrown an error")
 
@@ -121,41 +122,81 @@ func TestValidBasicLabeler(t *testing.T) {
 	assert.Equal(t, float64(1.1234567890), v.Float64)
 	assert.Equal(t, float32(1.123), v.Float32)
 	assert.Equal(t, time.Second*1, v.Duration)
-	t.Log(v)
 }
 
-func TestValidBasicLabeler(t *testing.T) {
+type WithValidation struct {
+	Name          string            `label:"name"`
+	Enum          MyEnum            `label:"enum,required"`
+	RequiredField string            `label:"required_field,required"`
+	Defaulted     string            `label:"defaulted,default:default value"`
+	Labels        map[string]string `label:"*"`
+}
 
+func TestLabelerWithValidation(t *testing.T) {
 	l := StructWithLabels{
 		Labels: map[string]string{
-			"name":     "my name",
-			"enum":     "ValueB",
-			"int":      "123456789",
-			"int64":    "1234567890000",
-			"int32":    "12345",
-			"int16":    "123",
-			"int8":     "1",
-			"bool":     "true",
-			"duration": "1s",
-			"float64":  "1.1234567890",
-			"float32":  "1.123",
+			"name": "my name",
+			"enum": "X",
 		},
 	}
 
-	v := &ValidBasicLabeler{}
+	v := &WithValidation{}
 	err := Unmarshal(l, v)
 	assert.NoError(t, err, "Should not have thrown an error")
 
 	assert.Equal(t, "my name", v.Name)
-	assert.Equal(t, EnumValB, v.Enum)
-	assert.Equal(t, true, v.Bool)
-	assert.Equal(t, 123456789, v.Int)
-	assert.Equal(t, int8(1), v.Int8)
-	assert.Equal(t, int16(123), v.Int16)
-	assert.Equal(t, int32(12345), v.Int32)
-	assert.Equal(t, int64(1234567890000), v.Int64)
-	assert.Equal(t, float64(1.1234567890), v.Float64)
-	assert.Equal(t, float32(1.123), v.Float32)
-	assert.Equal(t, time.Second*1, v.Duration)
-	t.Log(v)
+	assert.Equal(t, EnumUnknown, v.Enum)
+}
+
+type WithDiscard struct {
+	Discarded string `label:"will_not_be_in_labels,discard"`
+	Kept      string `label:"will_be_in_labels"`
+	labels    map[string]string
+}
+
+func (wd *WithDiscard) SetLabels(labels map[string]string) {
+	wd.labels = labels
+}
+
+func TestLabelerWithDiscard(t *testing.T) {
+	l := StructWithLabels{
+		Labels: map[string]string{
+			"will_not_be_in_labels": "discarded_value",
+			"will_be_in_labels":     "kept_value",
+			"unassigned":            "unassigned will be in labels",
+		},
+	}
+
+	v := &WithDiscard{}
+	err := Unmarshal(l, v)
+	assert.NoError(t, err)
+	assert.Equal(t, "discarded_value", v.Discarded)
+	assert.Equal(t, "kept_value", v.Kept)
+	assert.NotContains(t, v.labels, "will_not_be_in_labels")
+	assert.Contains(t, v.labels, "will_be_in_labels")
+	assert.Contains(t, v.labels, "unassigned")
+}
+
+type NestedStruct struct {
+	SubField string `label:"subfield"`
+}
+
+type WithNestedStruct struct {
+	Nested      NestedStruct
+	ParentField string            `label:"parentfield"`
+	Labels      map[string]string `label:"*"`
+}
+
+func TestLabelerWithNestedStruct(t *testing.T) {
+	l := StructWithLabels{
+		Labels: map[string]string{
+			"parentfield": "parent-value",
+			"subfield":    "sub-value",
+		},
+	}
+
+	v := &WithNestedStruct{}
+	err := Unmarshal(l, v)
+	assert.NoError(t, err)
+	assert.Equal(t, "sub-value", v.Nested.SubField)
 }

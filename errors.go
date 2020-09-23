@@ -26,7 +26,12 @@ var (
 	// ErrMalformedTag returned when a tag is empty / malformed
 	ErrMalformedTag = errors.New("the label tag is malformed")
 	// ErrSettingLabels is returned when the v implements Labeler and SetLabels returns false
-	ErrSettingLabels = errors.New("SetLabels returned false")
+	ErrSettingLabels = errors.New("failed to set labels")
+
+	// ErrUnsupportedType  is returned when a tag exists on a type that does not implement
+	// Stringer/Stringee, UnmarsalText/MarshalText, or is not one of the following types:
+	// string, bool, int, or float
+	ErrUnsupportedType = errors.New("unsupported field type")
 )
 
 // FieldError is returned when there is an error parsing a field's tag due to

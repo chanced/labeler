@@ -1,31 +1,29 @@
-package labels_test
+package labels
 
 import (
 	"testing"
-
-	"github.com/chanced/labels"
 )
 
 type Basic struct {
 	Name string `label:"name"`
 }
 
-type Labeled struct {
+type Lbled struct {
 	Labels map[string]string
 }
 
-func (l Labeled) GetLabels() map[string]string {
+func (l Lbled) GetLabels() map[string]string {
 	return l.Labels
 }
 
 func TestBasicParse(t *testing.T) {
-	l := Labeled{
+	l := Lbled{
 		Labels: map[string]string{
 			"name": "value",
 		},
 	}
 
 	b := &Basic{}
-	labels.Unmarshal(l, b)
+	Unmarshal(l, b)
 	t.Log(b)
 }

@@ -10,20 +10,20 @@ import (
 	"time"
 )
 
-// Stringie is implemented by any value that has a FromString method,
+// Stringee is implemented by any value that has a FromString method,
 // which parses the “native” format for that value from a string and
 // returns a bool value to indicate success (true) or failure (false)
 // of parsing.
-// Use StringieStrict if returning an error is preferred.
-type Stringie interface {
+// Use StringeeStrict if returning an error is preferred.
+type Stringee interface {
 	FromString(s string) bool
 }
 
-// StringieStrict is implemented by any value that has a FromString method,
+// StringeeStrict is implemented by any value that has a FromString method,
 // which parses the “native” format for that value from a string.
 // The FromString method is used to parse a string, returning an error if
 // there was an issue while parsing.
-type StringieStrict interface {
+type StringeeStrict interface {
 	FromString(s string) error
 }
 
@@ -422,12 +422,12 @@ func (field labelField) setValue(labels map[string]string, o Options) error {
 		}
 	}
 
-	if iface, isStringie := field.Interface.(Stringie); isStringie {
+	if iface, isStringee := field.Interface.(Stringee); isStringee {
 		if fromStringOk := iface.FromString(value); fromStringOk {
 			return handleSet(field.Name, labels, key, keep, nil)
 		}
 	}
-	if iface, ok := field.Interface.(StringieStrict); ok {
+	if iface, ok := field.Interface.(StringeeStrict); ok {
 		err := iface.FromString(value)
 		return handleSet(field.Name, labels, key, keep, err)
 	}
@@ -481,10 +481,26 @@ func (field labelField) setValue(labels map[string]string, o Options) error {
 		}
 
 		field.Value.SetInt(int64(v))
+
 		return handleSet(field.Name, labels, key, keep, err)
 
+	case reflect.Float32, reflect.Float64:
+		var v float64
+		var err error
+		if field.Kind == reflect.Float32 {
+			v, err = strconv.ParseFloat(value, 32)
+		} else {
+			v, err = strconv.ParseFloat(value, 64)
+		}
+		if err != nil {
+			return handleSet(field.Name, labels, key, keep, err)
+		}
+		field.Value.SetFloat(float64(v))
+		return handleSet(field.Name, labels, key, keep, err)
+
+	default:
+		return handleSet(field.Name, labels, key, keep, ErrUnsupportedType)
 	}
-	return handleSet(field.Name, labels, key, keep, nil)
 }
 
 func handleSet(name string, labels map[string]string, key string, keep bool, err error) error {
@@ -493,30 +509,3 @@ func handleSet(name string, labels map[string]string, key string, keep bool, err
 	}
 	return NewFieldError(name, err)
 }
-
-// func set(t reflect.Type, f reflect.Value, value string) error {
-
-// 	switch t.Kind() {
-
-// 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-// 		if t.PkgPath() == "time" && t.Name() == "Duration" {
-// 			duration, err := time.ParseDuration(value)
-// 			if err != nil {
-// 				return err
-// 			}
-
-// 			f.Set(reflect.ValueOf(duration))
-// 			break
-// 		}
-
-// 		v, err := strconv.Atoi(value)
-// 		if err != nil {
-// 			return err
-// 		}
-// 		f.SetInt(int64(v))
-// 	default:
-// 		return ErrUnsupportedType
-// 	}
-
-// 	return nil
-// }

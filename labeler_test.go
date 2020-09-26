@@ -1,6 +1,7 @@
 package labeler
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -43,17 +44,12 @@ func (my MyEnum) String() string {
 	return myEnumMapToStr[my]
 }
 
-func (my *MyEnum) FromString(s string) bool {
+func (my *MyEnum) FromString(s string) error {
 	if v, ok := myEnumMapFromStr[s]; ok {
 		*my = v
-		return true
+		return nil
 	}
-	return false
-}
-
-type InvalidDueTomissingLabels struct {
-	Name string `label:"name"`
-	Enum MyEnum `label:"enum"`
+	return errors.New("Invalid value")
 }
 
 type ValidBasic struct {
@@ -68,24 +64,30 @@ type ValidBasic struct {
 	Int8     int8          `label:"int8"`
 	Bool     bool          `label:"bool"`
 	Duration time.Duration `label:"duration"`
-
-	Labels map[string]string
+	Time     time.Time     `label:"time,layout:01/02/2006 03:04PM"`
+	Labels   map[string]string
 }
 
 func (v *ValidBasic) SetLabels(l map[string]string) {
 	v.Labels = l
 
 }
+
+type InvalidDueToMissingLabels struct {
+	Name string `label:"name,required"`
+	Enum MyEnum `label:"enum"`
+}
+
 func TestInvalidDueToMissingLabels(t *testing.T) {
 	l := StructWithLabels{
 		Labels: map[string]string{
-			"name": "my name",
 			"enum": "ValueB",
 		},
 	}
-	inv := &InvalidDueTomissingLabels{}
+	inv := &InvalidDueToMissingLabels{}
 	err := Unmarshal(l, inv)
 	assert.Error(t, err, "Should have thrown an error")
+	assert.Error(t, ErrInvalidValue, err)
 	t.Log(err)
 }
 
@@ -104,6 +106,7 @@ func TestValidBasic(t *testing.T) {
 			"duration": "1s",
 			"float64":  "1.1234567890",
 			"float32":  "1.123",
+			"time":     "09/26/2020 10:10PM",
 		},
 	}
 
@@ -122,6 +125,10 @@ func TestValidBasic(t *testing.T) {
 	assert.Equal(t, float64(1.1234567890), v.Float64)
 	assert.Equal(t, float32(1.123), v.Float32)
 	assert.Equal(t, time.Second*1, v.Duration)
+
+	t.Log("TIME", v.Time)
+
+	assert.Equal(t, time.Date(int(2020), time.September, int(26), int(22), int(10), int(0), int(0), time.UTC), v.Time)
 }
 
 type WithValidation struct {

@@ -127,8 +127,6 @@ func newFieldRef(structField reflect.StructField, fieldValue reflect.Value, mute
 		f.Unmarshaler = t
 	case Stringee:
 		f.Stringee = t
-	case encoding.TextUnmarshaler:
-		f.TextUnmarshaler = t
 	case *time.Time:
 		f.IsTime = true
 	case *time.Duration:
@@ -137,15 +135,14 @@ func newFieldRef(structField reflect.StructField, fieldValue reflect.Value, mute
 		f.IsTime = true
 	case time.Duration:
 		f.IsDuration = true
+	case encoding.TextUnmarshaler:
+		f.TextUnmarshaler = t
 	}
 
 	switch t := f.Interface.(type) {
 	case Marshaler:
 		f.Marshaler = t
-	case fmt.Stringer:
-		f.Stringer = t
-	case encoding.TextMarshaler:
-		f.TextMarshaler = t
+
 	case time.Time:
 		f.IsTime = true
 	case time.Duration:
@@ -154,6 +151,10 @@ func newFieldRef(structField reflect.StructField, fieldValue reflect.Value, mute
 		f.IsTime = true
 	case *time.Duration:
 		f.IsDuration = true
+	case fmt.Stringer:
+		f.Stringer = t
+	case encoding.TextMarshaler:
+		f.TextMarshaler = t
 	}
 	if f.IsTagged {
 		err := f.parseTag(o)
@@ -169,7 +170,7 @@ func newFieldRef(structField reflect.StructField, fieldValue reflect.Value, mute
 			f.StrictLabeler = t
 		case Labeler:
 			f.Labeler = t
-		case map[string]string: // may need to make this configurable
+		case *map[string]string: // may need to make this configurable
 			f.IsSettableMap = true
 		default:
 			return f, f.err(ErrInvalidContainer)
@@ -196,7 +197,7 @@ func (f *fieldRef) parseTag(o *Options) error {
 	keys := strings.Split(tagStr, o.Seperator)
 	f.Tag.Key = keys[0]
 
-	if f.Tag.Key == o.DefaultToken {
+	if f.Tag.Key == o.ContainerToken {
 		f.IsContainer = true
 	}
 
@@ -264,7 +265,9 @@ func (f *fieldRef) parseTag(o *Options) error {
 				if len(sub) != 2 {
 					return f.err(ErrMalformedTag)
 				}
+
 				f.Tag.Format = strings.TrimSpace(sub[1])
+				fmt.Println(f.Tag.Format)
 			case strings.Contains(k, o.DefaultToken):
 				sub := strings.SplitN(key, o.AssignmentStr, 2)
 				if len(sub) != 2 {
@@ -278,10 +281,10 @@ func (f *fieldRef) parseTag(o *Options) error {
 	return nil
 }
 
-func (f *fieldRef) set(l map[string]string, o Options) error {
+func (f *fieldRef) set(l map[string]string, o *Options) error {
 	switch {
 	case f.UnmarshalerWithOptions != nil:
-		err := f.UnmarshalerWithOptions.UnmarshalLabels(l, o)
+		err := f.UnmarshalerWithOptions.UnmarshalLabels(l, *o)
 		if err != nil {
 			return f.err(err)
 		}
@@ -295,7 +298,7 @@ func (f *fieldRef) set(l map[string]string, o Options) error {
 	}
 
 	if f.IsContainer {
-		return f.resolveContainer(l, o)
+		return f.resolveContainer(l, *o)
 	}
 	if !f.IsTagged {
 		return nil
@@ -359,10 +362,10 @@ func (f *fieldRef) set(l map[string]string, o Options) error {
 	var valueToSet interface{}
 	var err error
 
-	switch f.Interface.(type) {
-	case string:
+	switch ty := f.Interface.(type) {
+	case *string:
 		valueToSet = value
-	case bool:
+	case *bool:
 		valueToSet, err = strconv.ParseBool(value)
 	case *time.Time:
 		if timeLayout == "" {
@@ -371,37 +374,38 @@ func (f *fieldRef) set(l map[string]string, o Options) error {
 		valueToSet, err = time.Parse(timeLayout, value)
 	case *time.Duration:
 		valueToSet, err = time.ParseDuration(value)
-	case int64:
+	case *int64:
 		valueToSet, err = strconv.ParseInt(value, 10, 64)
-	case int32:
+	case *int32:
 		var v int64
 		v, err = strconv.ParseInt(value, 10, 32)
 		if err == nil {
 			valueToSet = int32(v)
 		}
-	case int16:
+	case *int16:
 		var v int64
 		v, err = strconv.ParseInt(value, 10, 16)
 		if err == nil {
 			valueToSet = int16(v)
 		}
-	case int8:
+	case *int8:
 		var v int64
 		v, err = strconv.ParseInt(value, 10, 8)
 		if err == nil {
 			valueToSet = int8(v)
 		}
-	case int:
+	case *int:
 		valueToSet, err = strconv.Atoi(value)
-	case float64:
+	case *float64:
 		valueToSet, err = strconv.ParseFloat(value, 64)
-	case float32:
+	case *float32:
 		var v float64
 		v, err = strconv.ParseFloat(value, 32)
 		if err == nil {
 			valueToSet = float32(v)
 		}
 	default:
+		fmt.Println(ty)
 		err = ErrUnsupportedType
 	}
 	return f.resolve(l, key, valueToSet, keep, err)

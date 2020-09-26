@@ -155,7 +155,7 @@ func Unmarshal(input interface{}, v interface{}, opts ...Option) error {
 		return NewParsingError(errs)
 	}
 	if p.containerField != nil {
-		err = p.containerField.set(l, *o)
+		err = p.containerField.set(l, o)
 		if err != nil {
 			var fe *FieldError
 			if errors.As(err, &fe) {
@@ -176,7 +176,7 @@ func Unmarshal(input interface{}, v interface{}, opts ...Option) error {
 		t.SetLabels(l)
 	default:
 		if !o.isNested {
-			errSettingLabels = ErrSettingLabels
+			return ErrInvalidValue
 		}
 	}
 	if errSettingLabels != nil {
@@ -246,6 +246,8 @@ func unmarshalField(f fieldRef, l map[string]string, wg *sync.WaitGroup, errCh c
 				errCh <- newFieldError(&f, err)
 			}
 		}
+	} else if f.IsTagged {
+		f.set(l, o)
 	}
 }
 

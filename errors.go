@@ -17,7 +17,7 @@ var (
 	//ErrMultipleContainers is returned when there are more than one tag with "*"
 	ErrMultipleContainers = errors.New("There can only be one tag with *")
 	// ErrInvalidValue is returned when the value passed to Unmarshal is not nil or not a pointer to a struct
-	ErrInvalidValue = errors.New("value must be a non-nil pointer to a struct")
+	ErrInvalidValue = errors.New("value must be a non-nil pointer to a struct that implements Labeler, StrictLabeler, or GenericLabeler; has a container field (set via options or a tag with the container token (defaults: \"*\"); or implements Unmarshaler")
 	// ErrUnexportedField occurs when a field is marked with tag "label" (or Options.Tag) and not exported.
 	ErrUnexportedField = errors.New("field must be exported")
 	// ErrMissingRequiredLabel occurs  when a label is marked as required but not available.

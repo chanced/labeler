@@ -62,6 +62,7 @@ type fieldRef struct {
 var labelMapType reflect.Type = reflect.TypeOf(map[string]string{})
 
 func newFieldRef(structField reflect.StructField, fieldValue reflect.Value, mutex *sync.Mutex, o *Options) (fieldRef, error) {
+
 	fieldName := structField.Name
 
 	isContainer := o.LabelsField != "" && o.LabelsField == fieldName
@@ -170,6 +171,8 @@ func newFieldRef(structField reflect.StructField, fieldValue reflect.Value, mute
 			f.StrictLabeler = t
 		case Labeler:
 			f.Labeler = t
+		case map[string]string: // may need to make this configurable
+			f.IsSettableMap = true
 		case *map[string]string: // may need to make this configurable
 			f.IsSettableMap = true
 		default:

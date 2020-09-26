@@ -207,3 +207,23 @@ func TestLabelerWithNestedStruct(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "sub-value", v.Nested.SubField)
 }
+
+type WithNestedStructAsPtr struct {
+	Nested      *NestedStruct
+	ParentField string            `label:"parentfield"`
+	Labels      map[string]string `label:"*"`
+}
+
+func TestLabelerWithNestedStructAsPtr(t *testing.T) {
+	l := StructWithLabels{
+		Labels: map[string]string{
+			"parentfield": "parent-value",
+			"subfield":    "sub-value",
+		},
+	}
+
+	v := &WithNestedStructAsPtr{}
+	err := Unmarshal(l, v)
+	assert.NoError(t, err)
+	assert.Equal(t, "sub-value", v.Nested.SubField)
+}

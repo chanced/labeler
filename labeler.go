@@ -85,6 +85,9 @@ func Unmarshal(input interface{}, v interface{}, opts ...Option) error {
 		in = t.GetLabels()
 	case map[string]string:
 		in = input.(map[string]string)
+	case *map[string]string:
+		in = *input.(*map[string]string)
+
 	default:
 		return ErrInvalidInput
 	}

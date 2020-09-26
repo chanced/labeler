@@ -2,6 +2,7 @@ package labeler
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -209,11 +210,12 @@ func TestLabelerWithNestedStruct(t *testing.T) {
 }
 
 type WithNestedStructAsPtr struct {
-	Nested      *NestedStruct
-	ParentField string            `label:"parentfield"`
-	Labels      map[string]string `label:"*"`
+	Nested *NestedStruct
 }
 
+func (p *WithNestedStructAsPtr) SetLabels(m map[string]string) {
+
+}
 func TestLabelerWithNestedStructAsPtr(t *testing.T) {
 	l := StructWithLabels{
 		Labels: map[string]string{
@@ -224,6 +226,13 @@ func TestLabelerWithNestedStructAsPtr(t *testing.T) {
 
 	v := &WithNestedStructAsPtr{}
 	err := Unmarshal(l, v)
+	var p *ParsingError
+	if errors.As(err, &p) {
+
+		fmt.Println(p.Errs)
+		t.Log(p.Errs)
+	}
 	assert.NoError(t, err)
 	assert.Equal(t, "sub-value", v.Nested.SubField)
+
 }

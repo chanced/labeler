@@ -91,36 +91,32 @@ func newFieldRef(structField reflect.StructField, fieldValue reflect.Value, mute
 	}
 
 	fieldKind := fieldValue.Kind()
-	fieldType := structField.Type
 
 	if fieldKind == reflect.Ptr {
 		f.IsPtr = true
 		var ptr reflect.Value
-		elem := fieldType.Elem()
-		if fieldValue.IsNil() || fieldType.Kind() != reflect.Struct {
+
+		if fieldValue.IsNil() {
+			elem := fieldValue.Type().Elem()
 			ptr = reflect.New(elem)
 		} else {
 			ptr = fieldValue.Elem()
 		}
-		f.Kind = ptr.Kind()
-		f.Value = ptr
-		f.Ptr = fieldValue
+		fieldValue.Set(ptr)
+		f.Kind = ptr.Elem().Kind()
+		f.Value = ptr.Elem()
+		f.Ptr = ptr
 	} else {
 		f.IsPtr = false
 		f.Value = fieldValue
 		f.Kind = fieldKind
 	}
 
-	// not sure if I should check if fieldKind == reflect.Interface
+	f.CanInterface = f.Value.CanAddr() && f.Value.Addr().CanInterface()
 
-	if !isTagged && f.Kind != reflect.Struct && !f.IsContainer {
-		return f, nil
-	}
-
-	f.CanInterface = f.Value.Addr().CanInterface()
-
-	f.Interface = fieldValue.Addr().Interface()
-
+	f.Interface = f.Value.Addr().Interface()
+	fi := f.Interface
+	fmt.Println(fi)
 	switch t := f.Interface.(type) {
 	case UnmarshalerWithOptions:
 		f.UnmarshalerWithOptions = t
@@ -180,7 +176,7 @@ func newFieldRef(structField reflect.StructField, fieldValue reflect.Value, mute
 		}
 		return f, nil
 	}
-
+	// not sure if I should check if fieldKind == reflect.Interface
 	if !f.IsTime && f.Kind == reflect.Struct {
 		f.IsStruct = true
 	}
@@ -472,7 +468,7 @@ func (f *fieldRef) setValue(v interface{}) {
 	rv := reflect.ValueOf(v)
 	f.Value.Set(rv)
 	if f.IsPtr {
-		f.Ptr.Set(f.Value)
+		f.Ptr.Set(f.Value.Elem())
 	}
 }
 

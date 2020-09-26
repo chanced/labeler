@@ -102,10 +102,11 @@ func newFieldRef(structField reflect.StructField, fieldValue reflect.Value, mute
 		} else {
 			ptr = fieldValue.Elem()
 		}
-		fieldValue.Set(ptr)
+
 		f.Kind = ptr.Elem().Kind()
 		f.Value = ptr.Elem()
 		f.Ptr = ptr
+		fieldValue.Set(ptr)
 	} else {
 		f.IsPtr = false
 		f.Value = fieldValue
@@ -113,10 +114,10 @@ func newFieldRef(structField reflect.StructField, fieldValue reflect.Value, mute
 	}
 
 	f.CanInterface = f.Value.CanAddr() && f.Value.Addr().CanInterface()
-
+	if !f.CanInterface {
+		return f, nil
+	}
 	f.Interface = f.Value.Addr().Interface()
-	fi := f.Interface
-	fmt.Println(fi)
 	switch t := f.Interface.(type) {
 	case UnmarshalerWithOptions:
 		f.UnmarshalerWithOptions = t
@@ -266,7 +267,6 @@ func (f *fieldRef) parseTag(o *Options) error {
 				}
 
 				f.Tag.Format = strings.TrimSpace(sub[1])
-				fmt.Println(f.Tag.Format)
 			case strings.Contains(k, o.DefaultToken):
 				sub := strings.SplitN(key, o.AssignmentStr, 2)
 				if len(sub) != 2 {
@@ -361,7 +361,7 @@ func (f *fieldRef) set(l map[string]string, o *Options) error {
 	var valueToSet interface{}
 	var err error
 
-	switch ty := f.Interface.(type) {
+	switch f.Interface.(type) {
 	case *string:
 		valueToSet = value
 	case *bool:
@@ -404,7 +404,6 @@ func (f *fieldRef) set(l map[string]string, o *Options) error {
 			valueToSet = float32(v)
 		}
 	default:
-		fmt.Println(ty)
 		err = ErrUnsupportedType
 	}
 	return f.resolve(l, key, valueToSet, keep, err)

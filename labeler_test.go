@@ -150,8 +150,13 @@ func TestLabelerWithValidation(t *testing.T) {
 
 	v := &WithValidation{}
 	err := Unmarshal(l, v)
-	assert.NoError(t, err, "Should not have thrown an error")
-
+	assert.Error(t, err, "should contain errors")
+	var e *ParsingError
+	if errors.As(err, &e) {
+		assert.Len(t, e.Errs, 2)
+	} else {
+		assert.Fail(t, "Error should be a parsing error")
+	}
 	assert.Equal(t, "my name", v.Name)
 	assert.Equal(t, EnumUnknown, v.Enum)
 }
@@ -186,7 +191,7 @@ func TestLabelerWithDiscard(t *testing.T) {
 }
 
 type NestedStruct struct {
-	SubField string `label:"subfield"`
+	SubField string `label:"subfield,required"`
 }
 
 type WithNestedStruct struct {
@@ -234,5 +239,18 @@ func TestLabelerWithNestedStructAsPtr(t *testing.T) {
 	}
 	assert.NoError(t, err)
 	assert.Equal(t, "sub-value", v.Nested.SubField)
+
+}
+
+func TestLabelerWithNestedStructWithValidationErrs(t *testing.T) {
+	l := StructWithLabels{
+		Labels: map[string]string{
+			"parentfield": "parent-value",
+		},
+	}
+
+	v := &WithNestedStruct{}
+	err := Unmarshal(l, v)
+	assert.Error(t, err)
 
 }

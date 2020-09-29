@@ -7,7 +7,7 @@ import "strings"
 // Default options:
 // Tag:                    "label",
 // DefaultToken:           "defaultvalue",
-// LayoutToken:            "layout",
+// FormatToken:            "format",
 // RequiredToken:          "required",
 // NotRequiredToken:       "notrequired",
 // CaseSensitiveToken:     "casesensitive",
@@ -17,15 +17,16 @@ import "strings"
 // Seperator:              ",",
 // ContainerFlag:          "*",
 // AssignmentStr:          ":",
-// TimeLayout:             "",
-// LabelsField:            "",
+// TimeFormat:             "",
+// ContainerField:            "",
 // IgnoreCase:             true,
 // KeepLabels:             true,
 // RequireAllFields:       false,
 // CaseSensitiveTokens:    false,
 type Options struct {
+
+	// Tag is the tag to lookup. Default is "label"
 	// default: "label"
-	// This is the tag to lookup. Default is "label"
 	Tag string
 	// default: ","
 	// This is the divider / seperator between tag options, configurable in the
@@ -39,11 +40,12 @@ type Options struct {
 	// If blank, the field is assumed accessible through GetLabels / SetLabels,
 	// Unmarshal/Marshal or tag `label:"*"`. If none of these are applicable an
 	// error will be returned from Unmarshal / Marshal.
-	LabelsField string
+	ContainerField string
+
 	// default: true
-	// Determines whether or not to keep labels that were unmarshaled into other fields
-	// Individual fields can override this setting at the field level by appending
-	// "discard," "keep" or configured KeepToken or DiscardToken.
+	// KeepLabels Determines whether or not to keep labels that were unmarshaled into
+	// other fields. Individual fields can override this setting at the field level by
+	// appending "discard," "keep" or configured KeepToken or DiscardToken.
 	// Example: MyField string `label:"myField,keep"`
 	// Example: MyField string `label:"myField, discard"`
 	// Example: MyField string `label:"myField, mycustomdiscard"` (set in options)
@@ -51,13 +53,12 @@ type Options struct {
 	// `label:"*, keep"` or `label:"*, discard"
 	KeepLabels bool
 
-	// default: false
-	// Determines whether or not all fields are required
+	// RequireAllFields Determines whether or not all fields are required
 	// Individual fields can override this setting at the field level by appending
 	// "required", "notrequired", or a custom configured RequiredToken or NotRequiredToken.
+	// default: false
 	// Example: MyField string `label:"myField,required"` // required
 	// Example: MyField string `label:"myField,notrequired"` // not required
-
 	RequireAllFields bool
 
 	// default: ""
@@ -67,15 +68,15 @@ type Options struct {
 	//default: true
 
 	// default: ""
-	// TimeLayout Sets the default format to parse times with. Can be overridden at the tag level
+	// TimeFormat Sets the default format to parse times with. Can be overridden at the tag level
 	// or set with the * field.
-	TimeLayout string
+	TimeFormat string
 
 	// default: "*"
 	// ContainerToken sets the string to match for a field marking the label container.
 	// Using a field level container tag is not mandatory. Implementing an appropriate interface
 	// or using a setting is safer as tag settings take precedent over options while some options can not
-	// be set at the container tag level (TimeLayout, ContainerFlag, Tag, Seperator)
+	// be set at the container tag level (TimeFormat, ContainerFlag, Tag, Seperator)
 	ContainerToken string
 
 	// default: "default"
@@ -111,17 +112,54 @@ type Options struct {
 	IgnoreCaseToken string
 
 	// default: ":"
-	// AssignmentStr is used to assign values, such as default (default value) or layout
+	// AssignmentStr is used to assign values, such as default (default value) or format
 	AssignmentStr string
 
-	// default: "layout"
-	// LayoutToken is used to assign the layout of a field. This is only used for time.Time at the moment.
-	LayoutToken string
+	// default: "Format"
+	// LayoutToken is used to assign the format of a field. This is only used for time.Time at the moment.
+	FormatToken string
 
 	// default: false
 	CaseSensitiveTokens bool
 
-	isNested bool
+	// default: 'f'
+	FloatFormat byte
+	// FloatFormatToken is used to differentiate the target format, primarily to be used on container tags,
+	// however it can be used on a float field if preferred.
+	// default: floatformat
+	FloatFormatToken string
+	// TimeFormatToken is used to differentiate the target format, primarily to be used on container tags,
+	// however it can be used on a time field if preferred.
+	// default: timeformat
+	TimeFormatToken string
+}
+
+// SetFromTag sets options from t if t is on a container field (either marked as a container with a tag set
+// to Options.ContainerFlag) or Options.ContainerField
+// Options that can be updated from the tag are:
+// FloatFormat, TimeFormat (via TimeFormatToken), KeepLabels (via Options.KeepToken / Options.DiscardToken),
+// RequireAllFields (via Options.RequiredToken), IgnoreCase (via Options.IgnoreCaseToken)
+// returns: true if successful, false otherwise
+func (o *Options) SetFromTag(t Tag) bool {
+	if !t.IsContainer {
+		return false
+	}
+	if t.FloatFormat != 0 {
+		o.FloatFormat = t.FloatFormat
+	}
+	if t.TimeFormat != "" {
+		o.TimeFormat = t.TimeFormat
+	}
+	if t.KeepIsSet {
+		o.KeepLabels = t.Keep
+	}
+	if t.IgnoreCaseIsSet {
+		o.IgnoreCase = t.IgnoreCase
+	}
+	if t.RequiredIsSet {
+		o.RequireAllFields = t.Required
+	}
+	return true
 }
 
 // Option is a function which accepts *Options, allowing for configuration
@@ -134,10 +172,10 @@ func OptCaseSensitive() Option {
 	}
 }
 
-// OptContainerField sets the LabelsField. This is overriden if a field contains the tag `label:"*"`
-func OptContainerField(field string) Option {
+// OptUseContainerField sets the ContainerField. This is overriden if a field contains the tag `label:"*"`
+func OptUseContainerField(field string) Option {
 	return func(o *Options) {
-		o.LabelsField = field
+		o.ContainerField = field
 	}
 }
 
@@ -184,7 +222,7 @@ func OptUseTag(v string) Option {
 // ContainerFlag sets the string to match for a field marking the label container.
 // Using a field level container tag is not mandatory. Implementing an appropriate interface
 // or using a setting is safer as tag settings take precedent over options while some options can not
-// be set at the container tag level (TimeLayout, ContainerFlag, Tag, Seperator)
+// be set at the container tag level (TimeFormat, ContainerFlag, Tag, Seperator)
 func OptUseContainerToken(v string) Option {
 	return func(o *Options) {
 		o.ContainerToken = v
@@ -209,49 +247,28 @@ func OptUseAssignmentStr(v string) Option {
 	}
 }
 
-// OptUseTimeLayout sets the TimeLayout option to v.
-func OptUseTimeLayout(v string) Option {
+// OptUseTimeFormat sets the TimeFormat option to v.
+func OptUseTimeFormat(v string) Option {
 	return func(o *Options) {
-		o.TimeLayout = v
+		o.TimeFormat = v
 	}
 }
 
-//CopyOptions copies Options in an Option...
-func CopyOptions(opts *Options) Option {
+// OptUseFloatFormat Sets the global FloatFormat to use in FormatFloat. Optiosn are 'b', 'e', 'E', 'f', 'g', 'G', 'x', 'X'
+func OptUseFloatFormat(fmt byte) Option {
 	return func(o *Options) {
-		o.AssignmentStr = opts.AssignmentStr
-		o.CaseSensitiveToken = opts.CaseSensitiveToken
-		o.CaseSensitiveTokens = opts.CaseSensitiveTokens
-		o.ContainerToken = opts.ContainerToken
-		o.Default = opts.Default
-		o.DefaultToken = opts.DefaultToken
-		o.DiscardToken = opts.DiscardToken
-		o.LayoutToken = opts.LayoutToken
-		o.IgnoreCase = opts.IgnoreCase
-		o.KeepLabels = opts.KeepLabels
-		o.KeepToken = opts.KeepToken
-		o.LabelsField = opts.LabelsField
-		o.NotRequiredToken = opts.NotRequiredToken
-		o.RequireAllFields = opts.RequireAllFields
-		o.RequiredToken = opts.RequiredToken
-		o.Seperator = opts.Seperator
-		o.Tag = opts.Tag
-		o.TimeLayout = opts.TimeLayout
+		o.FloatFormat = fmt
 
 	}
 }
 
-func isNested() Option {
-	return func(o *Options) {
-		o.isNested = true
-	}
-}
-
-func getOptions(opts []Option) (*Options, error) {
-	o := &Options{
+func newOptions(opts []Option) (Options, error) {
+	o := Options{
 		Tag:                 "label",
 		DefaultToken:        "defaultvalue",
-		LayoutToken:         "layout",
+		FormatToken:         "format",
+		FloatFormatToken:    "floatformat",
+		TimeFormatToken:     "timeformat",
 		RequiredToken:       "required",
 		NotRequiredToken:    "notrequired",
 		CaseSensitiveToken:  "casesensitive",
@@ -261,20 +278,44 @@ func getOptions(opts []Option) (*Options, error) {
 		Seperator:           ",",
 		ContainerToken:      "*",
 		AssignmentStr:       ":",
-		TimeLayout:          "",
-		LabelsField:         "",
+		TimeFormat:          "",
+		ContainerField:      "",
 		IgnoreCase:          true,
 		KeepLabels:          true,
 		RequireAllFields:    false,
 		CaseSensitiveTokens: false,
-		isNested:            false,
+		FloatFormat:         'f',
 	}
-	for _, opt := range opts {
-		opt(o)
+	for _, execOpt := range opts {
+		execOpt(&o)
 	}
 	switch "" {
-	case o.AssignmentStr, o.ContainerToken, o.Seperator, o.KeepToken, o.IgnoreCaseToken, o.CaseSensitiveToken, o.NotRequiredToken, o.RequiredToken, o.LayoutToken, o.DefaultToken, o.Tag:
-		return o, ErrInvalidOption
+	case o.AssignmentStr:
+		return o, NewOptionError("AssignmentStr", o.AssignmentStr, optRequiredMsg)
+	case o.ContainerToken:
+		return o, NewOptionError("ContainerToken", o.ContainerToken, optRequiredMsg)
+	case o.Seperator:
+		return o, NewOptionError("Seperator", o.Seperator, optRequiredMsg)
+	case o.KeepToken:
+		return o, NewOptionError("KeepToken", o.KeepToken, optRequiredMsg)
+	case o.IgnoreCaseToken:
+		return o, NewOptionError("IgnoreCaseToken", o.IgnoreCaseToken, optRequiredMsg)
+	case o.CaseSensitiveToken:
+		return o, NewOptionError("CaseSensitiveToken", o.CaseSensitiveToken, optRequiredMsg)
+	case o.NotRequiredToken:
+		return o, NewOptionError("NotRequiredToken", o.NotRequiredToken, optRequiredMsg)
+	case o.RequiredToken:
+		return o, NewOptionError("RequiredToken", o.RequiredToken, optRequiredMsg)
+	case o.FormatToken:
+		return o, NewOptionError("FormatToken", o.FormatToken, optRequiredMsg)
+	case o.DefaultToken:
+		return o, NewOptionError("DefaultToken", o.DefaultToken, optRequiredMsg)
+	case o.Tag:
+		return o, NewOptionError("Tag", o.Tag, optRequiredMsg)
+	}
+
+	if !isValidFloatFormat(o.FloatFormat) {
+		return o, NewOptionError("FloatFormat", string(o.FloatFormat), "invalid float format")
 	}
 	if !o.CaseSensitiveTokens {
 		o.IgnoreCaseToken = strings.ToLower(o.IgnoreCaseToken)
@@ -284,8 +325,19 @@ func getOptions(opts []Option) (*Options, error) {
 		o.DiscardToken = strings.ToLower(o.DiscardToken)
 		o.KeepToken = strings.ToLower(o.KeepToken)
 		o.DefaultToken = strings.ToLower(o.DefaultToken)
-		o.LayoutToken = strings.ToLower(o.LayoutToken)
+		o.FormatToken = strings.ToLower(o.FormatToken)
 	}
 
 	return o, nil
+}
+
+var floatFormatOptions [8]byte = [8]byte{'b', 'e', 'E', 'f', 'g', 'G', 'x', 'X'}
+
+func isValidFloatFormat(f byte) bool {
+	for _, b := range floatFormatOptions {
+		if f == b {
+			return true
+		}
+	}
+	return false
 }

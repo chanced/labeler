@@ -12,8 +12,11 @@ type StructWithLabels struct {
 	Labels map[string]string
 }
 
-func (l StructWithLabels) GetLabels() map[string]string {
-	return l.Labels
+func (s StructWithLabels) GetLabels() map[string]string {
+	return s.Labels
+}
+func (s StructWithLabels) SetLabels(l map[string]string) {
+	s.Labels = l
 }
 
 type MyEnum int
@@ -136,8 +139,9 @@ func TestExample(t *testing.T) {
 	assert.Equal(t, uint32(1234567), v.Uint32, "Uinit32 should be set to 1234567")
 	assert.Equal(t, uint16(123), v.Uint16, "Unit16 should be set to 123")
 	assert.Equal(t, uint8(1), v.Uint8, "Uint8 should be set to 1")
-	assert.Equal(t, l.Labels["disc"], v.Dedupe)
+
 	assert.Zero(t, v.CaSe)
+	assert.Equal(t, "Demonstrates that discard is removed from the Labels after field value is set", v.Dedupe)
 	assert.NotContains(t, v.GetLabels(), "dedupe")
 	assert.Equal(t, time.Date(int(2020), time.September, int(26), int(22), int(10), int(0), int(0), time.UTC), v.Time)
 

@@ -282,6 +282,29 @@ func (lbl *labeler) initFields() error {
 			processing = false
 		}
 	}
+
+	for err := range ch.errCh {
+		var fieldErr *FieldError
+		if errors.As(err, &fieldErr) {
+			errs = append(errs, fieldErr)
+		} else {
+			return err
+		}
+	}
+	for f := range ch.fieldCh {
+		switch {
+		case f.IsContainer:
+			if containerField == nil {
+				containerField = &f
+			} else {
+				if containerField.Name != f.Name {
+					return ErrMultipleContainers
+				}
+			}
+		case f.IsTagged:
+			tagged = append(tagged, f)
+		}
+	}
 	if len(errs) > 0 {
 		return NewParsingError(errs)
 	}

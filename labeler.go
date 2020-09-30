@@ -71,7 +71,7 @@ type MarshalerWithOptions interface {
 }
 
 // Unmarshal parses labels and unmarshals them into v. The input can
-// be either implement Labeled with GetLabels() map[string]string or
+// either implement Labeled with GetLabels() map[string]string or
 // GetLabels(tag string) map[string]string or simply be a map[string]string.
 // There must be a way of setting labels in the form of map[string]string.
 // v can implement Labeler by having a SetLabels(map[string]string),

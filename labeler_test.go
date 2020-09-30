@@ -118,7 +118,7 @@ func TestExample(t *testing.T) {
 	l := StructWithLabels{
 		Labels: labels,
 	}
-	for i := 0; i < 0; i++ {
+	for i := 0; i < 10; i++ {
 		v := &Example{}
 		err := Unmarshal(l, v)
 		assert.NoError(t, err, "Should not have thrown an error")

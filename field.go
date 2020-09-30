@@ -96,7 +96,7 @@ func newField(structField reflect.StructField, fieldValue reflect.Value, o Optio
 		f.Value = fieldValue
 		f.Kind = fieldKind
 	}
-
+	f.Type = f.Value.Type()
 	f.CanInterface = f.Value.CanAddr() && f.Value.Addr().CanInterface()
 	if !f.CanInterface {
 		return f, nil
@@ -498,6 +498,7 @@ func (f field) getRefKind() reflect.Kind {
 	return f.Kind
 }
 func (f field) getRefType() reflect.Type {
+
 	return f.Type
 }
 func (f field) getRefValue() reflect.Value {

@@ -95,10 +95,47 @@ func Unmarshal(input interface{}, v interface{}, opts ...Option) error {
 		return err
 	}
 
-	err = lbl.unmarshal(input)
+	err = lbl.setLabels(input)
 	if err != nil {
 		return err
 	}
+	errs := []*FieldError{}
+	if err != nil {
+		return err
+	}
+	for _, f := range lbl.Fields.Tagged {
+		err = f.set(lbl.Labels, lbl.Options)
+		var fieldErr *FieldError
+		if err != nil {
+			if errors.As(err, &fieldErr) {
+				errs = append(errs, fieldErr)
+			} else {
+				errs = append(errs, f.err(err))
+			}
+		} else if !f.Keep {
+			delete(lbl.Labels, f.Key)
+		}
+	}
+	var errSettingLabels error
+	switch t := v.(type) {
+	case GenericLabeler:
+		errSettingLabels = t.SetLabels(lbl.Labels, o.Tag)
+	case StrictLabeler:
+		errSettingLabels = t.SetLabels(lbl.Labels)
+	case Labeler:
+		t.SetLabels(lbl.Labels)
+	default:
+		errSettingLabels = ErrInvalidValue
+	}
+	if errSettingLabels != nil {
+		return ErrSettingLabels
+	}
+
+	if len(errs) > 0 {
+		return NewParsingError(errs)
+	}
+
+	// lbl.Fields.setContainerLabels(v, lbl.Labels, lbl.Options)
 	return nil
 }
 
@@ -201,9 +238,10 @@ func newLabeler(v interface{}, o Options) (labeler, error) {
 	}
 	rv = rv.Elem()
 	kind = rv.Kind()
+	rt := rv.Type()
 	lbl.RValue = rv
 	lbl.RKind = kind
-	lbl.RType = rv.Type()
+	lbl.RType = rt
 	if !rv.CanAddr() || kind != reflect.Struct {
 		return lbl, ErrInvalidValue
 	}
@@ -223,16 +261,13 @@ func (lbl *labeler) initFields() error {
 		case f := <-ch.fieldCh:
 			switch {
 			case f.IsContainer:
-				if containerField != nil {
-					// TODO: Sure this up.
+				if containerField == nil {
+					containerField = &f
+				} else {
 					if containerField.Name != f.Name {
 						return ErrMultipleContainers
 					}
-				} else if containerField == nil {
-					containerField = &f
-					lbl.Options.SetFromTag(f.Tag)
 				}
-
 			case f.IsTagged:
 				tagged = append(tagged, f)
 			}
@@ -249,6 +284,9 @@ func (lbl *labeler) initFields() error {
 	}
 	if len(errs) > 0 {
 		return NewParsingError(errs)
+	}
+	if containerField != nil {
+		lbl.Options.SetFromTag(containerField.Tag)
 	}
 	lbl.Fields.Container = containerField
 	lbl.Fields.Tagged = tagged
@@ -283,10 +321,6 @@ func (lbl *labeler) setLabels(input interface{}) error {
 	return nil
 }
 
-func (lbl *labeler) unmarshal(input interface{}) error {
-	err := lbl.setLabels(input)
-	if err != nil {
-		return err
-	}
-	return nil
-}
+// func (lbl *labeler) unmarshal(input interface{}) error {
+
+// }

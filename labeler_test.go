@@ -54,12 +54,12 @@ func (my *MyEnum) FromString(s string) error {
 
 type Example struct {
 	Name            string        `label:"name"`
-	Important       string        `label:"im, required"`
+	Important       string        `label:"imp, required"`
 	Enum            MyEnum        `label:"enum"`
 	Duration        time.Duration `label:"duration"`
 	Time            time.Time     `label:"time, format: 01/02/2006 03:04PM"`
 	Dedupe          string        `label:"dedupe, discard"`
-	CSensitive      string        `label:"CSensitive, casesensitive"`
+	CaSe            string        `label:"CaSe, casesensitive"`
 	FloatWithFormat float64       `label:"FloatWithFormat, format:b"`
 	Float64         float64       `label:"float64"`
 	Float32         float32       `label:"float32"`
@@ -89,8 +89,8 @@ func (e *Example) GetLabels() map[string]string {
 func TestExample(t *testing.T) {
 
 	labels := map[string]string{
-		"name":            "my name",
-		"im":              "important field",
+		"name":            "Archer",
+		"imp":             "important field",
 		"enum":            "ValueB",
 		"int":             "123456789",
 		"int64":           "1234567890",
@@ -109,7 +109,7 @@ func TestExample(t *testing.T) {
 		"uint8":           "1",
 		"FloatWithFormat": "123.234823484",
 		"dedupe":          "Demonstrates that discard is removed from the Labels after field value is set",
-		"csensitive":      "value should not be set due to not matching case",
+		"case":            "value should not be set due to not matching case",
 	}
 
 	l := StructWithLabels{
@@ -120,24 +120,24 @@ func TestExample(t *testing.T) {
 	err := Unmarshal(l, v)
 	assert.NoError(t, err, "Should not have thrown an error")
 
-	assert.Equal(t, "my name", v.Name)
-	assert.Equal(t, EnumValB, v.Enum)
-	assert.Equal(t, true, v.Bool)
-	assert.Equal(t, 123456789, v.Int)
-	assert.Equal(t, int8(1), v.Int8)
-	assert.Equal(t, int16(123), v.Int16)
-	assert.Equal(t, int32(12345), v.Int32)
-	assert.Equal(t, int64(1234567890), v.Int64)
-	assert.Equal(t, float64(1.1234567890), v.Float64)
-	assert.Equal(t, float32(1.123), v.Float32)
-	assert.Equal(t, time.Second*1, v.Duration)
-	assert.Equal(t, uint(1234), v.Uint)
-	assert.Equal(t, uint64(1234567890), v.Uint64)
-	assert.Equal(t, uint32(1234567), v.Uint32)
-	assert.Equal(t, uint16(123), v.Uint16)
-	assert.Equal(t, uint8(1), v.Uint8)
+	assert.Equal(t, "Archer", v.Name, "Name should be set to \"Archer\"")
+	assert.Equal(t, EnumValB, v.Enum, "Enum should be set to EnumValB")
+	assert.Equal(t, true, v.Bool, "Bool should be set to true")
+	assert.Equal(t, 123456789, v.Int, "Int should be set to 123456789")
+	assert.Equal(t, int8(1), v.Int8, "Int8 should be set to 1")
+	assert.Equal(t, int16(123), v.Int16, "Int16 should be set to 123")
+	assert.Equal(t, int32(12345), v.Int32, "Int32 should be set to 12345")
+	assert.Equal(t, int64(1234567890), v.Int64, "Int64 should be set to 1234567890")
+	assert.Equal(t, float64(1.1234567890), v.Float64, "Float64 should be ste to 1.1234567890")
+	assert.Equal(t, float32(1.123), v.Float32, "Float32 should be 1.123")
+	assert.Equal(t, time.Second*1, v.Duration, "Duration should be 1 second")
+	assert.Equal(t, uint(1234), v.Uint, "Unit should be set to 1234")
+	assert.Equal(t, uint64(1234567890), v.Uint64, "Uint64 should be set to 1234567890")
+	assert.Equal(t, uint32(1234567), v.Uint32, "Uinit32 should be set to 1234567")
+	assert.Equal(t, uint16(123), v.Uint16, "Unit16 should be set to 123")
+	assert.Equal(t, uint8(1), v.Uint8, "Uint8 should be set to 1")
 	assert.Equal(t, l.Labels["disc"], v.Dedupe)
-	assert.Zero(t, v.CSensitive)
+	assert.Zero(t, v.CaSe)
 	assert.NotContains(t, v.GetLabels(), "dedupe")
 	assert.Equal(t, time.Date(int(2020), time.September, int(26), int(22), int(10), int(0), int(0), time.UTC), v.Time)
 

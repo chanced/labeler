@@ -2,7 +2,6 @@ package labeler
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
 	"sync"
 )
@@ -26,6 +25,7 @@ func newChannels(r reflected, o Options) channels {
 		opts:    o,
 		fieldCh: make(chan field, i),
 		errCh:   make(chan error, i),
+		doneCh:  make(chan int, 2),
 		wg:      &sync.WaitGroup{},
 	}
 	switch t := r.(type) {
@@ -33,8 +33,6 @@ func newChannels(r reflected, o Options) channels {
 		ch.field = t
 	case *labeler:
 		ch.labeler = t
-	default:
-		fmt.Printf("%t", t)
 	}
 	return ch
 }
@@ -62,14 +60,10 @@ func (ch channels) finished() {
 
 func (ch channels) processFields() {
 	defer ch.finished()
-	fmt.Println("Inside processFields")
 	r := ch.sub
 	numField := r.getRefNumField()
 	rt := r.getRefType()
 	rv := r.getRefValue()
-	fmt.Println("numField:", numField)
-	fmt.Println(rt)
-	fmt.Println(rv)
 
 	for i := 0; i < numField; i++ {
 		ch.wg.Add(1)
@@ -95,22 +89,21 @@ func (ch channels) handleErr(err error) {
 }
 
 func (ch channels) processField(structField reflect.StructField, valueField reflect.Value) {
-	fmt.Println("!!!!!!! processField: ", structField.Name)
 
-	defer func() {
-		var err error
-		if r := recover(); r != nil {
-			switch e := r.(type) {
-			case error:
-				err = e
-			case string:
-				err = errors.New(e)
-			default:
-				err = errors.New("unkown error")
-			}
-			ch.handleErr(err)
-		}
-	}()
+	// defer func() {
+	// 	var err error
+	// 	if r := recover(); r != nil {
+	// 		switch e := r.(type) {
+	// 		case error:
+	// 			err = e
+	// 		case string:
+	// 			err = errors.New(e)
+	// 		default:
+	// 			err = errors.New("unkown error")
+	// 		}
+	// 		ch.handleErr(err)
+	// 	}
+	// }()
 	defer ch.wg.Done()
 	f, err := newField(structField, valueField, ch.opts)
 

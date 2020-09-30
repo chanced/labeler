@@ -344,7 +344,7 @@ func (f *field) set(l map[string]string, o Options) error {
 	var valueToSet interface{}
 	var err error
 
-	switch f.Interface.(type) {
+	switch t := f.Interface.(type) {
 	case *string:
 		valueToSet = value
 	case *bool:
@@ -415,6 +415,7 @@ func (f *field) set(l map[string]string, o Options) error {
 			valueToSet = uint8(v)
 		}
 	default:
+		fmt.Println(t)
 		err = ErrUnsupportedType
 	}
 	return f.resolve(l, valueToSet, err)

@@ -53,9 +53,16 @@ type Unmarshaler interface {
 
 // UnmarshalerWithOptions is implemented by any type that has the method
 // UnmarshalLabels, providing a means of unmarshaling map[string]string
-// that also accepts ...Option themselves.
+// that also accepts Options.
 type UnmarshalerWithOptions interface {
 	UnmarshalLabels(v map[string]string, opts Options) error
+}
+
+// UnmarshalerWithTagAndOptions is implemented by any type that has the method
+// UnmarshalLabels, providing a means of unmarshaling map[string]string
+// that also accepts Tag and Options.
+type UnmarshalerWithTagAndOptions interface {
+	UnmarshalLabels(v map[string]string, t Tag, opts Options) error
 }
 
 // Marshaler is implemented by types with the method MarsahlLabels,
@@ -70,15 +77,14 @@ type MarshalerWithOptions interface {
 	MarshalLabels(o Options) (map[string]string, error)
 }
 
-// Unmarshal parses labels and unmarshals them into v. The input can
-// either implement Labeled with GetLabels() map[string]string or
-// GetLabels(tag string) map[string]string or simply be a map[string]string.
-// There must be a way of setting labels in the form of map[string]string.
-// v can implement Labeler by having a SetLabels(map[string]string),
-// implement GenericLabeler by having a SetLabels(map[string], tag string)
-// method, have a tag `labels:"*"` (note: "*" and "labels" are both
-// configurable) on a field somewhere in within v, or by setting the option
-// ContainerField either with UseContainerField(f string) or a custom Option
+// MarshalerWithTagAndOptions is implemented by types with the method MarsahlLabels,
+// thus being abel to marshal itself into map[string]string
+type MarshalerWithTagAndOptions interface {
+	MarshalLabels(t Tag, o Options) (map[string]string, error)
+}
+
+// Unmarshal parses labels and unmarshals them into v. See README.md for
+// available options for input and v.
 func Unmarshal(input interface{}, v interface{}, opts ...Option) error {
 	o, err := newOptions(opts)
 	if err != nil {

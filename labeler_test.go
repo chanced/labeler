@@ -142,7 +142,7 @@ func TestExample(t *testing.T) {
 		assert.Equal(t, uint8(1), v.Uint8, "Uint8 should be set to 1")
 
 		assert.Zero(t, v.CaSe)
-		assert.Equal(t, "will not be in labels", v.Dedupe)
+		assert.Equal(t, "Demonstrates that discard is removed from the Labels after field value is set", v.Dedupe)
 		assert.NotContains(t, v.GetLabels(), "dedupe")
 		assert.Equal(t, time.Date(int(2020), time.September, int(26), int(22), int(10), int(0), int(0), time.UTC), v.Time)
 		if t.Failed() {

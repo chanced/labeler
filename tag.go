@@ -17,11 +17,14 @@ type Tag struct {
 	Format          string
 	TimeFormat      string // used primarily on container tag
 	FloatFormat     byte   // used primarily on container tag
+	Raw             string
 }
 
 // NewTag creates a new Tag from a string and Options.
 func newTag(tagStr string, o Options) (Tag, error) {
-	t := Tag{}
+	t := Tag{
+		Raw: tagStr,
+	}
 	if tagStr == "" || tagStr == o.Seperator {
 		return t, ErrMalformedTag
 	}

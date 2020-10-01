@@ -4,29 +4,10 @@ import "strings"
 
 // Options are the configurable options allowed when Unmarshaling/Marshaling.
 // Tokens are not case sensitive unless the option CaseSensitiveToken is true.
-// Default options:
-// Tag:                    "label",
-// DefaultToken:           "defaultvalue",
-// FormatToken:            "format",
-// RequiredToken:          "required",
-// NotRequiredToken:       "notrequired",
-// CaseSensitiveToken:     "casesensitive",
-// IgnoreCaseToken:        "ignorecase",
-// KeepToken:              "keep",
-// DiscardToken:           "discard",
-// Seperator:              ",",
-// ContainerFlag:          "*",
-// AssignmentStr:          ":",
-// TimeFormat:             "",
-// ContainerField:            "",
-// IgnoreCase:             true,
-// KeepLabels:             true,
-// RequireAllFields:       false,
-// CaseSensitiveTokens:    false,
 type Options struct {
 
-	// Tag is the tag to lookup. Default is "label"
 	// default: "label"
+	// Tag is the tag to lookup.
 	Tag string
 	// default: ","
 	// This is the divider / seperator between tag options, configurable in the
@@ -172,8 +153,8 @@ func OptCaseSensitive() Option {
 	}
 }
 
-// OptUseContainerField sets the ContainerField. This is overriden if a field contains the tag `label:"*"`
-func OptUseContainerField(field string) Option {
+// OptContainerField sets the ContainerField. This is overriden if a field contains the tag `label:"*"`
+func OptContainerField(field string) Option {
 	return func(o *Options) {
 		o.ContainerField = field
 	}
@@ -202,70 +183,134 @@ func OptRequireAllFields() Option {
 	}
 }
 
-// OptUseSeperator sets the Seperator option to s. This allows for tags to have a different seperator string other than ","
+// OptSeperator sets the Seperator option to s. This allows for tags to have a different seperator string other than ","
 // such as MyField string `label:"mykey|default:has,commas"`
-func OptUseSeperator(s string) Option {
+func OptSeperator(s string) Option {
 	return func(o *Options) {
 		o.Seperator = s
 	}
 }
 
-// OptUseTag sets the Tag option to v. This allows for tags to have a different handle other than "label"
+// OptTag sets the Tag option to v. This allows for tags to have a different handle other than "label"
 // such as MyField string `lbl:"mykey|default:whatev"`
-func OptUseTag(v string) Option {
+func OptTag(v string) Option {
 	return func(o *Options) {
 		o.Tag = v
 	}
 }
 
-// OptUseContainerToken sets the ContainerToken option to v.
+// OptContainerToken sets the ContainerToken option to v.
 // ContainerFlag sets the string to match for a field marking the label container.
 // Using a field level container tag is not mandatory. Implementing an appropriate interface
 // or using a setting is safer as tag settings take precedent over options while some options can not
 // be set at the container tag level (TimeFormat, ContainerFlag, Tag, Seperator)
-func OptUseContainerToken(v string) Option {
+func OptContainerToken(v string) Option {
 	return func(o *Options) {
 		o.ContainerToken = v
 	}
 }
 
-// OptUseDefaultToken sets the DefaultToken option to v.
+// OptDefaultToken sets the DefaultToken option to v.
 // DefaultToken is the token used at the tag level to determine the default value for the
 // given field if it is not present in the labels map. Default is "default." Change if
 // "default:" could occur in your label keys
-func OptUseDefaultToken(v string) Option {
+func OptDefaultToken(v string) Option {
 	return func(o *Options) {
 		o.DefaultToken = v
 	}
 }
 
-// OptUseAssignmentStr sets the AssignmentStr option to v.
+// OptAssignmentStr sets the AssignmentStr option to v.
 // AssignmentStr is used to assign values, such as default (default value) or format (time)
-func OptUseAssignmentStr(v string) Option {
+func OptAssignmentStr(v string) Option {
 	return func(o *Options) {
 		o.AssignmentStr = v
 	}
 }
 
-// OptUseTimeFormat sets the TimeFormat option to v.
-func OptUseTimeFormat(v string) Option {
+// OptTimeFormat sets the TimeFormat option to v.
+func OptTimeFormat(v string) Option {
 	return func(o *Options) {
 		o.TimeFormat = v
 	}
 }
 
-// OptUseFloatFormat Sets the global FloatFormat to use in FormatFloat. Optiosn are 'b', 'e', 'E', 'f', 'g', 'G', 'x', 'X'
-func OptUseFloatFormat(fmt byte) Option {
+// OptFloatFormat Sets the global FloatFormat to use in FormatFloat. Optiosn are 'b', 'e', 'E', 'f', 'g', 'G', 'x', 'X'
+func OptFloatFormat(fmt byte) Option {
 	return func(o *Options) {
 		o.FloatFormat = fmt
 
 	}
 }
 
+// OptFormatToken sets the token used for indicating format at the field level.
+func OptFormatToken(v string) Option {
+	return func(o *Options) {
+		o.FormatToken = v
+	}
+}
+
+// OptRequiredToken sets RequiredToken to v
+func OptRequiredToken(v string) Option {
+	return func(o *Options) {
+		o.RequiredToken = v
+	}
+}
+
+// OptNotRequiredToken sets NotRequiredToken to v
+func OptNotRequiredToken(v string) Option {
+	return func(o *Options) {
+		o.NotRequiredToken = v
+	}
+}
+
+//OptIgnoreCaseToken sets the IgnoreCaseToken to v
+func OptIgnoreCaseToken(v string) Option {
+	return func(o *Options) {
+		o.IgnoreCaseToken = v
+	}
+}
+
+//OptCaseSensitiveToken sets CaseSensitiveToken to v
+func OptCaseSensitiveToken(v string) Option {
+	return func(o *Options) {
+		o.CaseSensitiveToken = v
+	}
+}
+
+//OptKeepToken sets KeepToken to v
+func OptKeepToken(v string) Option {
+	return func(o *Options) {
+		o.KeepToken = v
+	}
+}
+
+//OptDiscardToken sets DiscardToken to v
+func OptDiscardToken(v string) Option {
+	return func(o *Options) {
+		o.DiscardToken = v
+	}
+}
+
+//OptFloatFormatToken sets FloatFormatToken to v
+func OptFloatFormatToken(v string) Option {
+	return func(o *Options) {
+		o.FloatFormatToken = v
+	}
+}
+
+//OptTimeFormatToken sets TimeFormatToken to v
+func OptTimeFormatToken(v string) Option {
+	return func(o *Options) {
+		o.TimeFormatToken = v
+	}
+}
+
 func newOptions(opts []Option) (Options, error) {
 	o := Options{
 		Tag:                 "label",
-		DefaultToken:        "defaultvalue",
+		ContainerToken:      "*",
+		DefaultToken:        "default",
 		FormatToken:         "format",
 		FloatFormatToken:    "floatformat",
 		TimeFormatToken:     "timeformat",
@@ -276,7 +321,6 @@ func newOptions(opts []Option) (Options, error) {
 		KeepToken:           "keep",
 		DiscardToken:        "discard",
 		Seperator:           ",",
-		ContainerToken:      "*",
 		AssignmentStr:       ":",
 		TimeFormat:          "",
 		ContainerField:      "",

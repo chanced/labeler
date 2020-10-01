@@ -105,7 +105,7 @@ func (err *InvalidValueError) Unwrap() error {
 type FieldError struct {
 	Field string
 	Key   string
-	Tag   string
+	Tag   Tag
 	Err   error
 }
 
@@ -118,10 +118,9 @@ func (err *FieldError) Unwrap() error {
 }
 
 // NewFieldError creates a new FieldError
-func NewFieldError(name, key, tag string, err error) *FieldError {
+func NewFieldError(name string, tag Tag, err error) *FieldError {
 	return &FieldError{
 		Field: name,
-		Key:   key,
 		Tag:   tag,
 		Err:   err,
 	}
@@ -129,12 +128,12 @@ func NewFieldError(name, key, tag string, err error) *FieldError {
 }
 
 func newFieldError(f *field, err error) *FieldError {
-	return NewFieldError(f.Name, f.Tag.Key, f.TagStr, err)
+	return NewFieldError(f.Name, f.Tag, err)
 }
 
 func newFieldErrorFromNested(parent *field, err *FieldError) *FieldError {
 	name := fmt.Sprintf("%s.%s", parent.Name, err.Field)
-	return NewFieldError(name, err.Key, err.Tag, err)
+	return NewFieldError(name, err.Tag, err)
 
 }
 

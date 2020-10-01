@@ -79,7 +79,7 @@ accessing the labels `map[string]string`.
 | :--------------------------- | :---------------------------------------- | :----------------------------------------------------------------------------------------- |
 | `labeler.Labeled`            | `GetLabels() map[string]string`           |                                                                                            |
 | `labeler.GenericallyLabeled` | `GetLabels(tag string) map[string]string` | For when you have multiple label groups. See [this example](#example-using-multiple-tags). |
-| `map[string]string`          | `map[string]string`                       |                                                                                            |
+| `map[string]string`          | `map[string]string`                       | You can pass in the `map[string]string` directly                                           |
 
 ## Examples
 

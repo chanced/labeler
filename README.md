@@ -75,11 +75,11 @@ accessing the labels `map[string]string`.
 
 `input` must satisfy one of the following:
 
-| Interface / Type             | Signature                                 | Notes                                                                                           |
-| :--------------------------- | :---------------------------------------- | :---------------------------------------------------------------------------------------------- |
-| `labeler.Labeled`            | `GetLabels() map[string]string`           |                                                                                                 |
-| `labeler.GenericallyLabeled` | `GetLabels(tag string) map[string]string` | This for when you have multiple label groups. See [this example](#example-using-multiple-tags). |
-| `map[string]string`          | `map[string]string`                       |                                                                                                 |
+| Interface / Type             | Signature                                 | Notes                                                                                      |
+| :--------------------------- | :---------------------------------------- | :----------------------------------------------------------------------------------------- |
+| `labeler.Labeled`            | `GetLabels() map[string]string`           |                                                                                            |
+| `labeler.GenericallyLabeled` | `GetLabels(tag string) map[string]string` | For when you have multiple label groups. See [this example](#example-using-multiple-tags). |
+| `map[string]string`          | `map[string]string`                       |                                                                                            |
 
 ## Examples
 

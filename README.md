@@ -23,28 +23,38 @@ into. `v` must be a non-`nil` pointer to a `struct` or a `value` that implements
 
 labeler is fairly flexible when it comes to what all you can tag. It supports the following types:
 
-| Interface / Type           | Signature                                                                                                 |        Usage |
-| :------------------------- | :-------------------------------------------------------------------------------------------------------- | -----------: |
-| `MarshalerWithOpts`        | `MarshalLabels(o labeler.Options) (map[string]string, error)`                                             |   Marshaling |
-| `Marshaler`                | `MarshalLabels() (map[string]string, error)`                                                              |   Marshaling |
-| `fmt.Stringer`             | `String() string`                                                                                         |   Marshaling |
-| `encoding.TextMarshaler`   | `MarshalText() (text []byte, err error)`                                                                  |   Marshaling |
-| `UnmarshalerWithOpts`      | `UnmarshalLabels(v map[string]string, opts Options) error`                                                | Unmarshaling |
-| `Unmarshaler`              | `UnmarshalLabels(l map[string]string) error`                                                              | Unmarshaling |
-| `Stringee`                 | `FromString(s string) error`                                                                              | Unmarshaling |
-| `encoding.TextUnmarshaler` | `UnmarshalText(text []byte) error`                                                                        | Unmarshaling |
-| `struct`                   | can either implement any of the above interfaces or have fields with tags. Supports `n` level of nesting  |         Both |
-| basic types                | `string`, `bool`, `int`, `int64`, `int32`, `int16`, `int8`, `uint`, `uint64`, `uint32`, `uint16`, `uint8` |         Both |
-| time                       | `time.Time`, `time.Duration`                                                                              |         Both |
+| Interface / Type              | Signature                                                                                                 |        Usage |
+| :---------------------------- | :-------------------------------------------------------------------------------------------------------- | -----------: |
+| `labeler.MarshalerWithOpts`   | `MarshalLabels(o labeler.Options) (map[string]string, error)`                                             |   Marshaling |
+| `labeler.Marshaler`           | `MarshalLabels() (map[string]string, error)`                                                              |   Marshaling |
+| `fmt.Stringer`                | `String() string`                                                                                         |   Marshaling |
+| `encoding.TextMarshaler`      | `MarshalText() (text []byte, err error)`                                                                  |   Marshaling |
+| `labeler.UnmarshalerWithOpts` | `UnmarshalLabels(v map[string]string, opts Options) error`                                                | Unmarshaling |
+| `labeler.Unmarshaler`         | `UnmarshalLabels(l map[string]string) error`                                                              | Unmarshaling |
+| `Stringee`                    | `FromString(s string) error`                                                                              | Unmarshaling |
+| `encoding.TextUnmarshaler`    | `UnmarshalText(text []byte) error`                                                                        | Unmarshaling |
+| `struct`                      | can either implement any of the above interfaces or have fields with tags. Supports `n` level of nesting  |         Both |
+| basic types                   | `string`, `bool`, `int`, `int64`, `int32`, `int16`, `int8`, `uint`, `uint64`, `uint32`, `uint16`, `uint8` |         Both |
+| time                          | `time.Time`, `time.Duration`                                                                              |         Both |
 
-**Note:** When using `UnmarshalerWithOpts`or `Unmarshaler`, you will receive the original
-`map[string]string`. If this turns out to be problematic, please let me know and I'll
-change it so that the `map` is copied before invoking `Unmarshal`.
+**Note:** When using `UnmarshalerWithOpts` or `Unmarshaler`, you will receive the original
+`map[string]string`. If this turns out to be problematic, please let submit an issue and
+I'll change it so that the `map` is copied before invoking `v.UnmarshalLabels`.
+
+If `UnmarshalerWithOpts` and `Unmarshaler` are not implemented by `v`, the
+`map[string]string` returned will be a copy.
 
 ### Labels
 
-When it comes to Unmarshaling, labeler needs a way to persist labels, regardless whether or not they have been assigned
-to tagged fields. By default, labeler will retain all labels unless `Options.KeepLabels` is set to `false` (See [Options](#options)).
+When unmarshaling, labeler needs a way to persist labels, regardless of whether or not they
+have been assigned to tagged fields. By default, labeler will retain all labels unless
+`Options.KeepLabels` is set to `false` (See [Options](#options)).
+
+While marshaling, labeler will prioritize field values over those stored in your label
+container. This means that values in the `map[string]string` will be overridden
+if there is a key with a matching tag.
+
+labeler ignores the case of keys by default, but this is configurable. (See [Options](#options))
 
 ## Input (Unmarshal)
 
@@ -215,7 +225,9 @@ func main() {
 
 ### Example with an enum
 
-The only important bit is that Color implements `String() string` and `FromString(s string) err`. This could have
+The only important bit is that `Color` implements `String() string` and
+`FromString(s string) error`. `Color` could have also implemented
+`UnmarshalText(text []byte) error` and `MarshalText() (text []byte, err error)`.
 
 ```go
 package main

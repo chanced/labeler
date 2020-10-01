@@ -20,7 +20,7 @@ type Tag struct {
 }
 
 // NewTag creates a new Tag from a string and Options.
-func NewTag(tagStr string, o Options) (Tag, error) {
+func newTag(tagStr string, o Options) (Tag, error) {
 	t := Tag{}
 	if tagStr == "" || tagStr == o.Seperator {
 		return t, ErrMalformedTag

@@ -23,8 +23,8 @@ var (
 	ErrInvalidValue = errors.New("invalid value")
 	// ErrUnexportedField occurs when a field is marked with tag "label" (or Options.Tag) and not exported.
 	ErrUnexportedField = errors.New("field must be exported")
-	// ErrMissingRequiredLabel occurs  when a label is marked as required but not available.
-	ErrMissingRequiredLabel = errors.New("value for this field is required")
+	// ErrLabelRequired occurs  when a label is marked as required but not available.
+	ErrLabelRequired = errors.New("value for this field is required")
 	// ErrUnmarshalingLabels returned from an Unmarshaler.UnmarshalLabel call
 	ErrUnmarshalingLabels = errors.New("an error originated from UnmarshalLabels")
 	// ErrMalformedTag returned when a tag is empty / malformed

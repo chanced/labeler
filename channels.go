@@ -10,7 +10,6 @@ import (
 type channels struct {
 	fieldCh chan field
 	errCh   chan error
-	doneCh  chan int
 	field   *field
 	labeler *labeler
 	sub     reflected
@@ -20,14 +19,17 @@ type channels struct {
 
 func newChannels(r reflected, o Options) channels {
 	i := r.getRefNumField()
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+
 	ch := channels{
 		sub:     r,
 		opts:    o,
 		fieldCh: make(chan field, i),
 		errCh:   make(chan error, i),
-		doneCh:  make(chan int, 2),
-		wg:      &sync.WaitGroup{},
+		wg:      wg,
 	}
+
 	switch t := r.(type) {
 	case *field:
 		ch.field = t
@@ -38,39 +40,47 @@ func newChannels(r reflected, o Options) channels {
 }
 
 func (ch channels) pipe(w channels) {
-	for {
+
+	errCh := w.errCh
+	fieldCh := w.fieldCh
+	for errCh != nil || fieldCh != nil {
 		select {
-		case err := <-w.errCh:
-			ch.handleErr(err)
-		case f := <-w.fieldCh:
-			ch.fieldCh <- f
-		case <-w.doneCh:
-			ch.doneCh <- 1
-			return
+		case err, ok := <-errCh:
+			if ok {
+				ch.handleErr(err)
+			} else {
+				errCh = nil
+			}
+		case f, ok := <-fieldCh:
+			if ok {
+				ch.fieldCh <- f
+			} else {
+				fieldCh = nil
+			}
+
 		}
 	}
 }
 
-func (ch channels) finished() {
-	ch.doneCh <- 1
-	close(ch.doneCh)
+func (ch channels) done() {
 	close(ch.errCh)
 	close(ch.fieldCh)
 }
 
 func (ch channels) processFields() {
-	defer ch.finished()
+	defer ch.done()
 	r := ch.sub
 	numField := r.getRefNumField()
 	rt := r.getRefType()
 	rv := r.getRefValue()
-
+	ch.wg.Add(numField)
 	for i := 0; i < numField; i++ {
-		ch.wg.Add(1)
 		structField := rt.Field(i)
 		valueField := rv.Field(i)
 		go ch.processField(structField, valueField)
 	}
+
+	ch.wg.Done()
 	ch.wg.Wait()
 }
 
@@ -118,8 +128,9 @@ func (ch channels) processField(structField reflect.StructField, valueField refl
 		ch.fieldCh <- f
 	case f.IsStruct:
 		wch := newChannels(f, ch.opts)
+
 		go wch.pipe(ch)
 		go wch.processFields()
-
+		wch.wg.Wait()
 	}
 }

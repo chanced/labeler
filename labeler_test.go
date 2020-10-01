@@ -115,12 +115,13 @@ func TestExample(t *testing.T) {
 		"case":            "value should not be set due to not matching case",
 	}
 
-	l := StructWithLabels{
+	input := StructWithLabels{
 		Labels: labels,
 	}
-	for i := 0; i < 10; i++ {
+
+	for i := 0; i < 1000; i++ {
 		v := &Example{}
-		err := Unmarshal(l, v)
+		err := Unmarshal(input, v)
 		assert.NoError(t, err, "Should not have thrown an error")
 
 		assert.Equal(t, "Archer", v.Name, "Name should be set to \"Archer\"")
@@ -141,10 +142,13 @@ func TestExample(t *testing.T) {
 		assert.Equal(t, uint8(1), v.Uint8, "Uint8 should be set to 1")
 
 		assert.Zero(t, v.CaSe)
-		assert.Equal(t, "Demonstrates that discard is removed from the Labels after field value is set", v.Dedupe)
+		assert.Equal(t, "will not be in labels", v.Dedupe)
 		assert.NotContains(t, v.GetLabels(), "dedupe")
 		assert.Equal(t, time.Date(int(2020), time.September, int(26), int(22), int(10), int(0), int(0), time.UTC), v.Time)
-
+		if t.Failed() {
+			t.Log("Failed after ", i, " executions")
+			break
+		}
 	}
 
 	// res, err := Marshal(v)
@@ -188,10 +192,12 @@ func TestLabelerWithValidation(t *testing.T) {
 			"enum": "X",
 		},
 	}
-
+	t.Log("Before Unmarshal")
 	v := &WithValidation{}
 	err := Unmarshal(l, v)
+	t.Log("After Unmarshal")
 	assert.Error(t, err, "should contain errors")
+	t.Log("err", err)
 	var e *ParsingError
 	if errors.As(err, &e) {
 		assert.Len(t, e.Errors, 2)

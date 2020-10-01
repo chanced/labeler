@@ -176,7 +176,7 @@ func newField(structField reflect.StructField, fieldValue reflect.Value, o Optio
 
 func (f *field) parseTag(o Options) error {
 	tagStr := strings.TrimSpace(f.TagStr)
-	t, err := NewTag(tagStr, o)
+	t, err := newTag(tagStr, o)
 	if err != nil {
 		return err
 	}
@@ -326,7 +326,7 @@ func (f *field) set(l map[string]string, o Options) error {
 		if defaultValue != "" {
 			value = defaultValue
 		} else if required {
-			return f.err(ErrMissingRequiredLabel)
+			return f.err(ErrLabelRequired)
 		} else {
 			return nil
 		}
@@ -513,5 +513,5 @@ func (f field) getRefField() *reflect.StructField {
 }
 
 func (f field) getRefNumField() int {
-	return f.getRefType().NumField()
+	return f.Type.NumField()
 }

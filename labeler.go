@@ -21,7 +21,7 @@ type StrictLabeler interface {
 // GenericLabeler is implemented by any type with a SetLabels method, which
 // accepts map[string]string and handles assignment of those values.
 type GenericLabeler interface {
-	SetLabels(labels map[string]string, tag string) error
+	SetLabels(labels map[string]string, token string) error
 }
 
 // Stringee is implemented by any value that has a FromString method,
@@ -80,63 +80,15 @@ type MarshalerWithOptions interface {
 // configurable) on a field somewhere in within v, or by setting the option
 // ContainerField either with UseContainerField(f string) or a custom Option
 func Unmarshal(input interface{}, v interface{}, opts ...Option) error {
-
-	o, optErr := newOptions(opts)
-	if optErr != nil {
-		return optErr
+	o, err := newOptions(opts)
+	if err != nil {
+		return err
 	}
 	lbl, err := newLabeler(v, o)
 	if err != nil {
 		return newInvalidValueErrorForUnmarshaling(o)
-
 	}
-	err = lbl.initFields()
-	if err != nil {
-		return err
-	}
-
-	err = lbl.setLabels(input)
-	if err != nil {
-		return err
-	}
-	errs := []*FieldError{}
-	if err != nil {
-		return err
-	}
-	for _, f := range lbl.Fields.Tagged {
-		err = f.set(lbl.Labels, lbl.Options)
-		var fieldErr *FieldError
-		if err != nil {
-			if errors.As(err, &fieldErr) {
-				errs = append(errs, fieldErr)
-			} else {
-				errs = append(errs, f.err(err))
-			}
-		} else if !f.Keep {
-			delete(lbl.Labels, f.Key)
-		}
-	}
-	var errSettingLabels error
-	switch t := v.(type) {
-	case GenericLabeler:
-		errSettingLabels = t.SetLabels(lbl.Labels, o.Tag)
-	case StrictLabeler:
-		errSettingLabels = t.SetLabels(lbl.Labels)
-	case Labeler:
-		t.SetLabels(lbl.Labels)
-	default:
-		errSettingLabels = ErrInvalidValue
-	}
-	if errSettingLabels != nil {
-		return ErrSettingLabels
-	}
-
-	if len(errs) > 0 {
-		return NewParsingError(errs)
-	}
-
-	// lbl.Fields.setContainerLabels(v, lbl.Labels, lbl.Options)
-	return nil
+	return lbl.unmarshal(input)
 }
 
 // Marshal parses v, pulling the values from tagged fields (default: "label") as
@@ -148,6 +100,11 @@ func Unmarshal(input interface{}, v interface{}, opts ...Option) error {
 func Marshal(v interface{}, opts ...Option) (l map[string]string, err error) {
 	return nil, nil
 
+}
+
+type fields struct {
+	Tagged    []field
+	Container *field
 }
 
 type keyValue struct {
@@ -166,57 +123,66 @@ type reflected interface {
 type labeler struct {
 	Value   interface{}
 	Options Options
-	Labels  map[string]string
-	Fields  fields
-	RValue  reflect.Value
-	RType   reflect.Type
-	RKind   reflect.Kind
+	// Labels  map[string]string
+	Fields fields
+	RValue reflect.Value
+	RType  reflect.Type
+	RKind  reflect.Kind
 }
 
-func (lbl labeler) getRefKind() reflect.Kind {
-	return lbl.RKind
-}
-func (lbl labeler) getRefType() reflect.Type {
-	return lbl.RType
-}
-func (lbl labeler) getRefValue() reflect.Value {
-	return lbl.RValue
-}
-
-func (lbl labeler) getRefNumField() int {
-
-	return lbl.getRefType().NumField()
-}
-
-func (lbl labeler) isStruct() bool {
-	return true
-}
-
-type fields struct {
-	Tagged    []field
-	Container *field
-}
-
-func (f *fields) setContainerLabels(v interface{}, l map[string]string, o Options) error {
-	var errSettingLabels error
-	if f.Container != nil {
-		return f.Container.set(l, o)
+func (lbl *labeler) unmarshal(input interface{}) error {
+	err := lbl.initFields()
+	if err != nil {
+		return err
 	}
-	switch t := v.(type) {
-	case GenericLabeler:
-		errSettingLabels = t.SetLabels(l, o.Tag)
-	case StrictLabeler:
-		errSettingLabels = t.SetLabels(l)
-	case Labeler:
-		t.SetLabels(l)
-	default:
-		errSettingLabels = ErrInvalidValue
+
+	labels, err := lbl.getLabels(input)
+	if err != nil {
+		return err
 	}
-	if errSettingLabels != nil {
-		return ErrSettingLabels
+	errs := []*FieldError{}
+	if err != nil {
+		return err
+	}
+	for _, f := range lbl.Fields.Tagged {
+		err = f.set(labels, lbl.Options)
+		var fieldErr *FieldError
+		if err != nil {
+			if errors.As(err, &fieldErr) {
+				errs = append(errs, fieldErr)
+			} else {
+				errs = append(errs, f.err(err))
+			}
+		} else if !f.Keep {
+			delete(labels, f.Key)
+		}
+	}
+	if len(errs) > 0 {
+		return NewParsingError(errs)
 	}
 	return nil
 }
+
+// func (f *labeler) setContainerLabels(v interface{}, l map[string]string, o Options) error {
+// var errSettingLabels error
+// if f.Container != nil {
+// 	return f.Container.set(l, o)
+// }
+// switch t := v.(type) {
+// case GenericLabeler:
+// 	errSettingLabels = t.SetLabels(l, o.Tag)
+// case StrictLabeler:
+// 	errSettingLabels = t.SetLabels(l)
+// case Labeler:
+// 	t.SetLabels(l)
+// default:
+// 	errSettingLabels = ErrInvalidValue
+// }
+// if errSettingLabels != nil {
+// 	return ErrSettingLabels
+// }
+// return nil
+// }
 
 func newFields() fields {
 	return fields{
@@ -228,7 +194,7 @@ func newLabeler(v interface{}, o Options) (labeler, error) {
 	lbl := labeler{
 		Value:   v,
 		Options: o,
-		Labels:  map[string]string{},
+		// Labels:  map[string]string{},
 	}
 
 	rv := reflect.ValueOf(v)
@@ -255,54 +221,34 @@ func (lbl *labeler) initFields() error {
 	errs := []*FieldError{}
 	tagged := []field{}
 	var containerField *field
-	processing := true
-	for processing {
+	fieldCh := ch.fieldCh
+	errCh := ch.errCh
+	for fieldCh != nil || errCh != nil {
 		select {
-		case f := <-ch.fieldCh:
+		case f, ok := <-fieldCh:
+			if !ok {
+				fieldCh = nil
+				break
+			}
 			switch {
-			case f.IsContainer:
-				if containerField == nil {
-					containerField = &f
-				} else {
-					if containerField.Name != f.Name {
-						return ErrMultipleContainers
-					}
-				}
+			case f.IsContainer && containerField == nil:
+				containerField = &f
+			case f.IsContainer && containerField.Name != "" && containerField.Name == f.Name:
+				return ErrMultipleContainers
 			case f.IsTagged:
 				tagged = append(tagged, f)
 			}
-		case err := <-ch.errCh:
+		case err, ok := <-errCh:
+			if !ok {
+				errCh = nil
+				break
+			}
 			var fieldErr *FieldError
 			if errors.As(err, &fieldErr) {
 				errs = append(errs, fieldErr)
 			} else {
 				return err
 			}
-		case <-ch.doneCh:
-			processing = false
-		}
-	}
-
-	for err := range ch.errCh {
-		var fieldErr *FieldError
-		if errors.As(err, &fieldErr) {
-			errs = append(errs, fieldErr)
-		} else {
-			return err
-		}
-	}
-	for f := range ch.fieldCh {
-		switch {
-		case f.IsContainer:
-			if containerField == nil {
-				containerField = &f
-			} else {
-				if containerField.Name != f.Name {
-					return ErrMultipleContainers
-				}
-			}
-		case f.IsTagged:
-			tagged = append(tagged, f)
 		}
 	}
 	if len(errs) > 0 {
@@ -322,28 +268,74 @@ func handleFieldPanic(f field, errCh chan<- *FieldError) {
 	}
 }
 
-func (lbl *labeler) setLabels(input interface{}) error {
-	var in map[string]string
-	switch t := input.(type) {
+func (lbl *labeler) getLabels(input interface{}) (map[string]string, error) {
+	var l map[string]string
+	container := lbl.Fields.Container
+	var target interface{}
+	if container != nil {
+		target = container.Interface
+	} else {
+		target = input
+	}
+	switch t := target.(type) {
 	case GenericallyLabeled:
-		in = t.GetLabels(lbl.Options.Tag)
+		l = t.GetLabels(lbl.Options.Tag)
 	case Labeled:
-		in = t.GetLabels()
+		l = t.GetLabels()
 	case map[string]string:
-		in = input.(map[string]string)
+		l = input.(map[string]string)
 	default:
-		return ErrInvalidInput
+		return nil, ErrInvalidInput
 	}
-	if in == nil {
-		in = map[string]string{}
+	if l == nil {
+		l = map[string]string{}
 	}
-	for key, val := range in {
-		lbl.Labels[key] = val
+	return l, nil
+}
+
+func (lbl *labeler) setLabels(l map[string]string) error {
+	o := lbl.Options
+	container := lbl.Fields.Container
+	if container != nil {
+		err := container.set(l, o)
+		if err != nil {
+			return ErrSettingLabels
+		}
+		return nil
+	}
+	var err error
+	switch t := lbl.Value.(type) {
+	case GenericLabeler:
+		err = t.SetLabels(l, o.Tag)
+	case StrictLabeler:
+		err = t.SetLabels(l)
+	case Labeler:
+		t.SetLabels(l)
+	default:
+		err = ErrSettingLabels
+	}
+	if err != nil {
+		return ErrSettingLabels
 	}
 
 	return nil
 }
 
-// func (lbl *labeler) unmarshal(input interface{}) error {
+func (lbl labeler) getRefKind() reflect.Kind {
+	return lbl.RKind
+}
+func (lbl labeler) getRefType() reflect.Type {
+	return lbl.RType
+}
+func (lbl labeler) getRefValue() reflect.Value {
+	return lbl.RValue
+}
 
-// }
+func (lbl labeler) getRefNumField() int {
+
+	return lbl.RType.NumField()
+}
+
+func (lbl labeler) isStruct() bool {
+	return true
+}

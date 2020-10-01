@@ -24,15 +24,6 @@ type GenericLabeler interface {
 	SetLabels(labels map[string]string, token string) error
 }
 
-// Stringee is implemented by any value that has a FromString method,
-// which parses the “native” format for that value from a string and
-// returns a bool value to indicate success (true) or failure (false)
-// of parsing.
-// Use StringeeStrict if returning an error is preferred.
-type Stringee interface {
-	FromString(s string) error
-}
-
 // Labeled is implemented by types with a method GetLabels, which returns
 // a map[string]string of labels and values
 type Labeled interface {
@@ -58,8 +49,7 @@ type UnmarshalerWithOpts interface {
 	UnmarshalLabels(v map[string]string, opts Options) error
 }
 
-// UnmarshalerWithTagAndOptions is implemented by any type that has the method
-// UnmarshalLabels, providing a means of unmarshaling map[string]string
+// UnmarshalerWithTagAndOpts providing a means of unmarshaling map[string]string
 // that also accepts Tag and Options.
 type UnmarshalerWithTagAndOpts interface {
 	UnmarshalLabels(v map[string]string, t Tag, opts Options) error
@@ -81,6 +71,15 @@ type MarshalerWithOpts interface {
 // thus being abel to marshal itself into map[string]string
 type MarshalerWithTagAndOptions interface {
 	MarshalLabels(t Tag, o Options) (map[string]string, error)
+}
+
+// Stringee is implemented by any value that has a FromString method,
+// which parses the “native” format for that value from a string and
+// returns a bool value to indicate success (true) or failure (false)
+// of parsing.
+// Use StringeeStrict if returning an error is preferred.
+type Stringee interface {
+	FromString(s string) error
 }
 
 // Unmarshal parses labels and unmarshals them into v. See README.md for

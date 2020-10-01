@@ -48,7 +48,19 @@ If `UnmarshalerWithOpts` and `Unmarshaler` are not implemented by `v`, the
 
 When unmarshaling, labeler needs a way to persist labels, regardless of whether or not they
 have been assigned to tagged fields. By default, labeler will retain all labels unless
-`Options.KeepLabels` is set to `false` (See [Options](#options)).
+`Options.KeepLabels` is set to `false` (See [Options](#options)). This is to ensure
+data integrity for labels that have not been unmarshaled into fields.
+
+Your available choices for `v` are:
+
+| Interface / Type                | Signature                                                                                                                                                                                                                                           |
+| :------------------------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `labeler.UnmarshalerWithOpts`   | `UnmarshalLabels(v map[string]string, opts Options) error`                                                                                                                                                                                          |
+| `labeler.Unmarshaler`           | `UnmarshalLabels(l map[string]string) error`                                                                                                                                                                                                        |
+| `labeler.Labeler`               | `SetLabels(labels map[string]string)`                                                                                                                                                                                                               |
+| `labeler.StrictLabeler`         | `SetLabels(labels map[string]string) error`                                                                                                                                                                                                         |
+| `labeler.GenericLabeler`        | `SetLabels(labels map[string]string, token string) error`                                                                                                                                                                                           |
+| `struct` with a container field | A `struct` with a field marked as being the container using `Options.ContainerToken` (defualt: `"*"`) on any level of `v` or a field with the name matching `Options.ContainerField` that is any `type` above or an accessible `map[string]string`. |
 
 While marshaling, labeler will prioritize field values over those stored in your label
 container. This means that values in the `map[string]string` will be overridden
@@ -58,9 +70,16 @@ labeler ignores the case of keys by default, but this is configurable. (See [Opt
 
 ## Input (Unmarshal)
 
-For `Unmarshal`, you also need to pass `input interface{}`
+For `Unmarshal`, you also need to pass `input interface{}` which provides a means of
+accessing the labels `map[string]string`.
 
----
+`input` must satisfy one of the following:
+
+| Interface / Type             | Signature                                 | Notes                                                                                           |
+| :--------------------------- | :---------------------------------------- | :---------------------------------------------------------------------------------------------- |
+| `labeler.Labeled`            | `GetLabels() map[string]string`           |                                                                                                 |
+| `labeler.GenericallyLabeled` | `GetLabels(tag string) map[string]string` | This for when you have multiple label groups. See [this example](#example-using-multiple-tags). |
+| `map[string]string`          | `map[string]string`                       | You can pass in a `map[string]string` directly.                                                 |
 
 ## Examples
 

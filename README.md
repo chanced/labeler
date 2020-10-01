@@ -101,10 +101,6 @@ type ExampleInput struct {
 func (e ExampleInput) GetLabels() map[string]string {
 	return e.Labels
 }
-func (e *ExampleInput) SetLabels(l map[string]string) {
-	e.Labels = l
-}
-
 type NestedExample struct {
 	Field string `label:"nested_field"`
 }

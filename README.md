@@ -260,7 +260,7 @@ func (e *Example3) GetLabels(t string){
             return e.Attributes
     }
 }
-func (e *Example3) SetLabels(l map[string]string) error{
+func (e *Example3) SetLabels(l map[string]string, t string) error{
     switch t {
         case "property":
             e.Characteristics = l

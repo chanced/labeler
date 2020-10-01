@@ -51,17 +51,17 @@ type Unmarshaler interface {
 	UnmarshalLabels(v map[string]string) error
 }
 
-// UnmarshalerWithOptions is implemented by any type that has the method
+// UnmarshalerWithOpts is implemented by any type that has the method
 // UnmarshalLabels, providing a means of unmarshaling map[string]string
 // that also accepts Options.
-type UnmarshalerWithOptions interface {
+type UnmarshalerWithOpts interface {
 	UnmarshalLabels(v map[string]string, opts Options) error
 }
 
 // UnmarshalerWithTagAndOptions is implemented by any type that has the method
 // UnmarshalLabels, providing a means of unmarshaling map[string]string
 // that also accepts Tag and Options.
-type UnmarshalerWithTagAndOptions interface {
+type UnmarshalerWithTagAndOpts interface {
 	UnmarshalLabels(v map[string]string, t Tag, opts Options) error
 }
 
@@ -71,9 +71,9 @@ type Marshaler interface {
 	MarshalLabels() (map[string]string, error)
 }
 
-// MarshalerWithOptions is implemented by types with the method MarsahlLabels,
+// MarshalerWithOpts is implemented by types with the method MarsahlLabels,
 // thus being abel to marshal itself into map[string]string
-type MarshalerWithOptions interface {
+type MarshalerWithOpts interface {
 	MarshalLabels(o Options) (map[string]string, error)
 }
 

@@ -1,6 +1,6 @@
 # labeler
 
-!!!**Not ready for usage yet**
+## ⚠️⚠️⚠️ Not ready for usage yet ⚠️⚠️⚠️
 
 A Go package for marshaling and unmarshaling `map[string]string` with struct tags.
 
@@ -14,32 +14,41 @@ go get github.com/chanced/labeler
 
 ## Value: `interface{}` defined
 
+Both Marshal and Unmarshal accept `v interface{}`, the value to marshal from or unmarshal
+into. `v` must be a non-`nil` pointer to a `struct` or a `value` that implements
+`labeler.MarshalWithOpts`, `labeler.Marshal`, `labeler.UnmarshalWithOpts`, or
+`labeler.Unmarshal` respectively.
+
 ### Fields
 
 labeler is fairly flexible when it comes to what all you can tag. It supports the following types:
 
-| Interface / Type            | Signature                                                                                                 |        Usage |
-| :-------------------------- | :-------------------------------------------------------------------------------------------------------- | -----------: |
-| `MarshalerWithOptions`      | `MarshalLabels(o labeler.Options) (map[string]string, error)`                                             |   Marshaling |
-| `MarshalerWithTagAndOpts`   | `MarshalLabels(t labeler.Tag, o labeler.Options) (map[string]string, error)`                              |   Marshaling |
-| `Marshaler`                 | `MarshalLabels() (map[string]string, error)`                                                              |   Marshaling |
-| `fmt.Stringer`              | `String() string`                                                                                         |   Marshaling |
-| `encoding.TextMarshaler`    | `MarshalText() (text []byte, err error)`                                                                  |   Marshaling |
-| `UnmarshalerWithTagAndOpts` | `UnmarshalLabels(v map[string]string, t Tag, opts Options) error`                                         | Unmarshaling |
-| `UnmarshalerWithOptions`    | `UnmarshalLabels(v map[string]string, opts Options) error`                                                | Unmarshaling |
-| `Unmarshaler`               | `UnmarshalLabels(l map[string]string) error`                                                              | Unmarshaling |
-| `Stringee`                  | `FromString(s string) error`                                                                              | Unmarshaling |
-| `encoding.TextUnmarshaler`  | `UnmarshalText(text []byte) error`                                                                        | Unmarshaling |
-| `struct`                    | can either implement any of the above interfaces or have fields with tags. Supports `n` level of nesting  |         Both |
-| basic types                 | `string`, `bool`, `int`, `int64`, `int32`, `int16`, `int8`, `uint`, `uint64`, `uint32`, `uint16`, `uint8` |         Both |
-| time                        | `time.Time`, `time.Duration`                                                                              |         Both |
+| Interface / Type           | Signature                                                                                                 |        Usage |
+| :------------------------- | :-------------------------------------------------------------------------------------------------------- | -----------: |
+| `MarshalerWithOpts`        | `MarshalLabels(o labeler.Options) (map[string]string, error)`                                             |   Marshaling |
+| `Marshaler`                | `MarshalLabels() (map[string]string, error)`                                                              |   Marshaling |
+| `fmt.Stringer`             | `String() string`                                                                                         |   Marshaling |
+| `encoding.TextMarshaler`   | `MarshalText() (text []byte, err error)`                                                                  |   Marshaling |
+| `UnmarshalerWithOpts`      | `UnmarshalLabels(v map[string]string, opts Options) error`                                                | Unmarshaling |
+| `Unmarshaler`              | `UnmarshalLabels(l map[string]string) error`                                                              | Unmarshaling |
+| `Stringee`                 | `FromString(s string) error`                                                                              | Unmarshaling |
+| `encoding.TextUnmarshaler` | `UnmarshalText(text []byte) error`                                                                        | Unmarshaling |
+| `struct`                   | can either implement any of the above interfaces or have fields with tags. Supports `n` level of nesting  |         Both |
+| basic types                | `string`, `bool`, `int`, `int64`, `int32`, `int16`, `int8`, `uint`, `uint64`, `uint32`, `uint16`, `uint8` |         Both |
+| time                       | `time.Time`, `time.Duration`                                                                              |         Both |
 
-### Input
+**Note:** When using `UnmarshalerWithOpts`or `Unmarshaler`, you will receive the original
+`map[string]string`. If this turns out to be problematic, please let me know and I'll
+change it so that the `map` is copied before invoking `Unmarshal`.
 
 ### Labels
 
 When it comes to Unmarshaling, labeler needs a way to persist labels, regardless whether or not they have been assigned
 to tagged fields. By default, labeler will retain all labels unless `Options.KeepLabels` is set to `false` (See [Options](#options)).
+
+## Input (Unmarshal)
+
+For `Unmarshal`, you also need to pass `input interface{}`
 
 ---
 
@@ -48,7 +57,11 @@ to tagged fields. By default, labeler will retain all labels unless `Options.Kee
 ### Basic example with accessor / mutator for Labels
 
 ```go
+package main
+
 import (
+    "fmt"
+
     "github.com/chanced/labeler"
 )
 
@@ -63,43 +76,6 @@ func (e *ExampleInput) SetLabels(l map[string]string) {
 	e.Labels = l
 }
 
-type MyEnum int
-
-const (
-	EnumUnknown MyEnum = iota
-	EnumValA
-	EnumValB
-)
-
-var myEnumMapToStr map[MyEnum]string = map[MyEnum]string{
-	EnumUnknown: "Unknown",
-	EnumValA:    "ValueA",
-	EnumValB:    "ValueB",
-}
-
-func getMyEnumMapFromStr() map[string]MyEnum {
-	m := make(map[string]MyEnum)
-	for key, value := range myEnumMapToStr {
-		m[value] = key
-	}
-	return m
-}
-
-var myEnumMapFromStr map[string]MyEnum = getMyEnumMapFromStr()
-
-func (my MyEnum) String() string {
-	return myEnumMapToStr[my]
-}
-
-func (my *MyEnum) FromString(s string) error {
-	if v, ok := myEnumMapFromStr[s]; ok {
-		*my = v
-		return nil
-	}
-	return errors.New("Invalid value")
-}
-
-
 type NestedExample struct {
 	Field string `label:"nested_field"`
 }
@@ -107,7 +83,6 @@ type NestedExample struct {
 type Example struct {
 	Name            string        `label:"name"`
 	Important       string        `label:"imp, required"`
-	Enum            MyEnum        `label:"enum"`
 	Duration        time.Duration `label:"duration"`
 	Time            time.Time     `label:"time, format: 01/02/2006 03:04PM"`
 	Dedupe          string        `label:"dedupe, discard"`
@@ -125,8 +100,8 @@ type Example struct {
 	Uint64          uint64        `label:"uint64"`
 	Uint32          uint32        `label:"uint32"`
 	Uint16          uint16        `label:"uint16"`
-	Uint8           uint8         `label:"uint8"`
-	Nested          NestedExample
+    Uint8           uint8         `label:"uint8"`
+    Nested          NestedExample
 	Labels          map[string]string
 }
 func (e *Example) SetLabels(l map[string]string) {
@@ -176,10 +151,11 @@ func main() {
                 // fieldErr has the field's Name (string) and Tag (labeler.Tag)
                 // as well as Err, the underlying Error which unwraps
                 switch {
-                    case errors.Is(fieldErr, ErrLabelRequired):
-                        // a field marked as required is missing in the labels
-                    case errors.Is(fieldErr, ErrMalformedTag):
-                 // case ...
+                case errors.Is(fieldErr, ErrLabelRequired):
+                    // a field marked as required is missing in the labels
+                case errors.Is(fieldErr, ErrMalformedTag):
+                    // something is wrong with the tag
+            //  case ...
                 }
             }
         } else if errors.Is(err, ErrInvalidInput) {
@@ -193,7 +169,7 @@ func main() {
         //handle err
     }
 
-    _ = l // map[string]string
+    fmt.Println(l) // map[string]string
 }
 ```
 
@@ -204,6 +180,8 @@ If you don't want to use accessors and mutators on your input and value, you can
 The container token is configurable with the `ContainerToken` option. See [Options](#options) for more info.
 
 ```go
+package main
+
 import (
     "fmt"
     "github.com/chanced/labeler"
@@ -220,7 +198,7 @@ func main() {
 
     v := &Example2{}
 
-    err := labeler.Unmarshal(l, u)
+    err := labeler.Unmarshal(l, v)
     if err != nil {
         // handle err
         _ = err
@@ -235,6 +213,60 @@ func main() {
 }
 ```
 
+### Example with an enum
+
+The only important bit is that Color implements `String() string` and `FromString(s string) err`. This could have
+
+```go
+package main
+
+type Color int
+
+const (
+	ColorUnknown Color = iota
+	ColorRed
+	ColorBlue
+)
+
+type Example3 struct {
+	Color  Color             `label:"color"`
+	Labels map[string]string `label:"*"`
+}
+
+var colorMapToStr map[Color]string = map[Color]string{
+	ColorUnknown: "Unknown",
+	ColorBlue:    "Blue",
+	ColorRed:     "Red",
+}
+
+
+func getColorMapFromStr() map[string]Color {
+	m := make(map[string]Color)
+	for key, value := range colorMapToStr {
+		m[value] = key
+	}
+	return m
+}
+
+var colormMapFromStr map[string]Color = getColorMapFromStr()
+
+func (c Color) String() string {
+	return colorMapToStr[my]
+}
+
+func (c *Color) FromString(s string) error {
+	if v, ok := colorMapFromStr[s]; ok {
+		*my = v
+		return nil
+	}
+	return errors.New("Invalid value")
+}
+
+type Example3 struct {
+}
+
+```
+
 ### Example using multiple tags
 
 Say you have multiple sources of labels and you want to unmarshal them into the same `struct`. This is achievable by setting the option `Tag`! See [Options](#options) for more info.
@@ -245,14 +277,14 @@ import (
     "github.com/chanced/labeler"
 )
 
-type Example3 struct {
+type Example4 struct {
     Name             string            `property:"name"`
     Color            string            `attribute:"color"`
     Characteristics  map[string]string
     Attributes       map[string]string
 }
-// you could also use containers, which is probably easier but for demo purposes:
-func (e *Example3) GetLabels(t string){
+
+func (e *Example4) GetLabels(t string){
     switch t {
         case "property":
             return e.Characteristics
@@ -260,7 +292,7 @@ func (e *Example3) GetLabels(t string){
             return e.Attributes
     }
 }
-func (e *Example3) SetLabels(l map[string]string, t string) error{
+func (e *Example4) SetLabels(l map[string]string, t string) error{
     switch t {
         case "property":
             e.Characteristics = l
@@ -269,11 +301,10 @@ func (e *Example3) SetLabels(l map[string]string, t string) error{
     }
 }
 
-
 func main() {
     properties := map[string]string { name: "Homer" }
     attributes := map[string]string { color: "Yellow" }
-    v := &Example3{}
+    v := &Example4{}
 
     err := labeler.Unmarshal(v, properties, OptTag("property"))
     if err != nil {

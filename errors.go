@@ -73,7 +73,7 @@ func newInvalidValueErrorForMarshaling(o Options) *InvalidValueError {
 		Unmarshaling:    false,
 		AllowedTypes:    marshalingTypes,
 		allowedTypesStr: marshalingTypesStr,
-		typeStr:         "Marshaler or MarshalerWithOptions",
+		typeStr:         "Marshaler or MarshalerWithOpts",
 	}
 
 	return err
@@ -87,7 +87,7 @@ func newInvalidValueErrorForUnmarshaling(o Options) *InvalidValueError {
 		Unmarshaling:    true,
 		AllowedTypes:    marshalingTypes,
 		allowedTypesStr: marshalingTypesStr,
-		typeStr:         "Unmarshaler or UnmarshalerWithOptions",
+		typeStr:         "Unmarshaler or UnmarshalerWithOpts",
 	}
 	return err
 }

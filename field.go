@@ -10,40 +10,40 @@ import (
 )
 
 type field struct {
-	Tag                    Tag
-	Type                   reflect.Type
-	Kind                   reflect.Kind
-	Value                  reflect.Value
-	Field                  reflect.StructField
-	Addr                   reflect.Value
-	Ptr                    reflect.Value
-	Interface              interface{}
-	Name                   string
-	Key                    string
-	TagStr                 string
-	WasSet                 bool
-	Keep                   bool
-	IsTime                 bool
-	IsStruct               bool
-	IsDuration             bool
-	IsPtr                  bool
-	IsTagged               bool
-	IsContainer            bool
-	CanAddr                bool
-	CanInterface           bool
-	IsSettableMap          bool
-	Unmarshaler            Unmarshaler
-	UnmarshalerWithOptions UnmarshalerWithOptions
-	Marshaler              Marshaler
-	Stringer               fmt.Stringer
-	Stringee               Stringee
-	Labeler                Labeler
-	Labeled                Labeled
-	GenericallyLabeled     GenericallyLabeled
-	StrictLabeler          StrictLabeler
-	GenericLabeler         GenericLabeler
-	TextUnmarshaler        encoding.TextUnmarshaler
-	TextMarshaler          encoding.TextMarshaler
+	Tag                 Tag
+	Type                reflect.Type
+	Kind                reflect.Kind
+	Value               reflect.Value
+	Field               reflect.StructField
+	Addr                reflect.Value
+	Ptr                 reflect.Value
+	Interface           interface{}
+	Name                string
+	Key                 string
+	TagStr              string
+	WasSet              bool
+	Keep                bool
+	IsTime              bool
+	IsStruct            bool
+	IsDuration          bool
+	IsPtr               bool
+	IsTagged            bool
+	IsContainer         bool
+	CanAddr             bool
+	CanInterface        bool
+	IsSettableMap       bool
+	Unmarshaler         Unmarshaler
+	UnmarshalerWithOpts UnmarshalerWithOpts
+	Marshaler           Marshaler
+	Stringer            fmt.Stringer
+	Stringee            Stringee
+	Labeler             Labeler
+	Labeled             Labeled
+	GenericallyLabeled  GenericallyLabeled
+	StrictLabeler       StrictLabeler
+	GenericLabeler      GenericLabeler
+	TextUnmarshaler     encoding.TextUnmarshaler
+	TextMarshaler       encoding.TextMarshaler
 }
 
 var labelMapType reflect.Type = reflect.TypeOf(map[string]string{})
@@ -103,8 +103,8 @@ func newField(structField reflect.StructField, fieldValue reflect.Value, o Optio
 	}
 	f.Interface = f.Value.Addr().Interface()
 	switch t := f.Interface.(type) {
-	case UnmarshalerWithOptions:
-		f.UnmarshalerWithOptions = t
+	case UnmarshalerWithOpts:
+		f.UnmarshalerWithOpts = t
 	case Unmarshaler:
 		f.Unmarshaler = t
 	case Stringee:
@@ -276,8 +276,8 @@ func (f *field) get(o Options) (map[string]string, error) {
 
 func (f *field) set(l map[string]string, o Options) error {
 	switch {
-	case f.UnmarshalerWithOptions != nil:
-		err := f.UnmarshalerWithOptions.UnmarshalLabels(l, o)
+	case f.UnmarshalerWithOpts != nil:
+		err := f.UnmarshalerWithOpts.UnmarshalLabels(l, o)
 		if err != nil {
 			return f.err(err)
 		}

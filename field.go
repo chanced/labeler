@@ -37,11 +37,11 @@ type field struct {
 	Marshaler           Marshaler
 	Stringer            fmt.Stringer
 	Stringee            Stringee
-	Labeler             Labeler
+	Labelee             Labelee
 	Labeled             Labeled
 	GenericallyLabeled  GenericallyLabeled
-	StrictLabeler       StrictLabeler
-	GenericLabeler      GenericLabeler
+	StrictLabelee       StrictLabelee
+	GenericLabelee      GenericLabelee
 	TextUnmarshaler     encoding.TextUnmarshaler
 	TextMarshaler       encoding.TextMarshaler
 }
@@ -54,6 +54,7 @@ func newField(structField reflect.StructField, fieldValue reflect.Value, o Optio
 
 	isContainer := o.ContainerField != "" && o.ContainerField == fieldName
 	canAddr := fieldValue.CanAddr()
+	canSet := fieldValue.CanSet()
 	tagStr, isTagged := structField.Tag.Lookup(o.Tag)
 	if isTagged {
 		isTagged = tagStr != ""
@@ -66,7 +67,7 @@ func newField(structField reflect.StructField, fieldValue reflect.Value, o Optio
 		IsTagged:    isTagged,
 		TagStr:      tagStr,
 	}
-	if isTagged && !canAddr {
+	if isTagged && !canSet {
 		return f, f.err(ErrUnexportedField)
 	}
 
@@ -150,12 +151,12 @@ func newField(structField reflect.StructField, fieldValue reflect.Value, o Optio
 	}
 	if f.IsContainer {
 		switch t := f.Interface.(type) {
-		case GenericLabeler:
-			f.GenericLabeler = t
-		case StrictLabeler:
-			f.StrictLabeler = t
-		case Labeler:
-			f.Labeler = t
+		case GenericLabelee:
+			f.GenericLabelee = t
+		case StrictLabelee:
+			f.StrictLabelee = t
+		case Labelee:
+			f.Labelee = t
 		case map[string]string: // may need to make this configurable
 			f.IsSettableMap = true
 		case *map[string]string: // may need to make this configurable
@@ -426,20 +427,20 @@ func (f *field) resolveContainer(l map[string]string, o Options) error {
 		return nil
 	}
 	switch {
-	case f.GenericLabeler != nil:
-		err := f.GenericLabeler.SetLabels(l, o.Tag)
+	case f.GenericLabelee != nil:
+		err := f.GenericLabelee.SetLabels(l, o.Tag)
 		if err != nil {
 			return f.err(err)
 		}
 		return nil
-	case f.StrictLabeler != nil:
-		err := f.StrictLabeler.SetLabels(l)
+	case f.StrictLabelee != nil:
+		err := f.StrictLabelee.SetLabels(l)
 		if err != nil {
 			return f.err(err)
 		}
 		return nil
-	case f.Labeler != nil:
-		f.Labeler.SetLabels(l)
+	case f.Labelee != nil:
+		f.Labelee.SetLabels(l)
 		return nil
 	case f.IsSettableMap:
 		f.setValue(l)
@@ -494,24 +495,20 @@ func (f *field) getKeyAndValueFromLabels(m map[string]string, ignoreCase bool) (
 	return key, "", false
 }
 
-func (f field) getRefKind() reflect.Kind {
+func (f field) refKind() reflect.Kind {
 	return f.Kind
 }
-func (f field) getRefType() reflect.Type {
+func (f field) refType() reflect.Type {
 
 	return f.Type
 }
-func (f field) getRefValue() reflect.Value {
+func (f field) refValue() reflect.Value {
 	return f.Value
 }
 func (f field) isStruct() bool {
 	return f.IsStruct
 }
-func (f field) getRefField() *reflect.StructField {
-	// returning ptr so that null check on labeler can be used
-	return &f.Field
-}
 
-func (f field) getRefNumField() int {
+func (f field) refNumField() int {
 	return f.Type.NumField()
 }

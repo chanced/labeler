@@ -16,7 +16,7 @@ var (
 	// ErrInvalidContainer is returned when the field marked with * is not map[string]string
 	// This error, along with ErrMultipleContainers, is returned immediately without checking for
 	// other potential parsing errors that may have occurred.
-	ErrInvalidContainer = errors.New("Field marked with * is not a map[string]string. Consider removing the * and implementing Labeler by including SetLabels(map[string]string) instead")
+	ErrInvalidContainer = errors.New("Field marked with * is not a map[string]string. Consider removing the * and implementing Labelee by including SetLabels(map[string]string) instead")
 	//ErrMultipleContainers is returned when there are more than one tag with "*"
 	ErrMultipleContainers = errors.New("There can only be one tag with *")
 	// ErrInvalidValue is returned when the value passed to Unmarshal is not nil or not a pointer to a struct
@@ -29,7 +29,7 @@ var (
 	ErrUnmarshalingLabels = errors.New("an error originated from UnmarshalLabels")
 	// ErrMalformedTag returned when a tag is empty / malformed
 	ErrMalformedTag = errors.New("the label tag is malformed")
-	// ErrSettingLabels occurs when the v implements Labeler and SetLabels returns false
+	// ErrSettingLabels occurs when the v implements Labelee and SetLabels returns false
 	ErrSettingLabels = errors.New("failed to set labels")
 	// ErrInvalidOption occurs when a required option or options is not assigned
 	ErrInvalidOption = errors.New("invalid option")
@@ -45,7 +45,7 @@ var (
 	ErrMissingFormat = errors.New("format is required for this field")
 
 	optRequiredMsg       = "is required"
-	unmarshalingTypes    = []string{"Labeler", "StrictLabeler", "GenericLabeler"}
+	unmarshalingTypes    = []string{"Labelee", "StrictLabelee", "GenericLabelee"}
 	marshalingTypes      = []string{"Labeled", "GenericallyLabeled"}
 	commaR               = regexp.MustCompile(`,(?:[^,]*$)`)
 	unmarshalingTypesStr = commaR.ReplaceAllString(strings.Join(unmarshalingTypes, ", "), "or ")

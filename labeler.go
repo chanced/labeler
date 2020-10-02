@@ -5,22 +5,22 @@ import (
 	"reflect"
 )
 
-// Labeler is implemented by any type with a SetLabels method, which
+// Labelee is implemented by any type with a SetLabels method, which
 // accepts map[string]string and handles assignment of those values.
-type Labeler interface {
+type Labelee interface {
 	SetLabels(labels map[string]string)
 }
 
-// StrictLabeler is implemented by types with a SetLabels method, which accepts
+// StrictLabelee is implemented by types with a SetLabels method, which accepts
 // map[string]string and handles assignment of those values, returning error if
 // there was an issue assigning the value.
-type StrictLabeler interface {
+type StrictLabelee interface {
 	SetLabels(labels map[string]string) error
 }
 
-// GenericLabeler is implemented by any type with a SetLabels method, which
+// GenericLabelee is implemented by any type with a SetLabels method, which
 // accepts map[string]string and handles assignment of those values.
-type GenericLabeler interface {
+type GenericLabelee interface {
 	SetLabels(labels map[string]string, token string) error
 }
 
@@ -89,7 +89,7 @@ func Unmarshal(input interface{}, v interface{}, opts ...Option) error {
 	if err != nil {
 		return err
 	}
-	lbl, err := newLabeler(v, o)
+	lbl, err := newLabelee(v, o)
 	if err != nil {
 		return newInvalidValueErrorForUnmarshaling(o)
 	}
@@ -118,11 +118,11 @@ type keyValue struct {
 }
 
 type reflected interface {
-	getRefKind() reflect.Kind
-	getRefType() reflect.Type
-	getRefValue() reflect.Value
+	refKind() reflect.Kind
+	refType() reflect.Type
+	refValue() reflect.Value
 	isStruct() bool
-	getRefNumField() int
+	refNumField() int
 }
 
 type labeler struct {
@@ -149,6 +149,11 @@ func (lbl *labeler) unmarshal(input interface{}) error {
 	if err != nil {
 		return err
 	}
+	l := make(map[string]string)
+	for k, v := range labels {
+		l[k] = v
+
+	}
 	for _, f := range lbl.Fields.Tagged {
 		err = f.set(labels, lbl.Options)
 		var fieldErr *FieldError
@@ -158,8 +163,9 @@ func (lbl *labeler) unmarshal(input interface{}) error {
 			} else {
 				errs = append(errs, f.err(err))
 			}
-		} else if !f.Keep {
-			delete(labels, f.Key)
+		}
+		if !f.Keep && f.WasSet && err != nil && f.Key != "" {
+			delete(l, f.Key)
 		}
 	}
 	if len(errs) > 0 {
@@ -168,34 +174,13 @@ func (lbl *labeler) unmarshal(input interface{}) error {
 	return nil
 }
 
-// func (f *labeler) setContainerLabels(v interface{}, l map[string]string, o Options) error {
-// var errSettingLabels error
-// if f.Container != nil {
-// 	return f.Container.set(l, o)
-// }
-// switch t := v.(type) {
-// case GenericLabeler:
-// 	errSettingLabels = t.SetLabels(l, o.Tag)
-// case StrictLabeler:
-// 	errSettingLabels = t.SetLabels(l)
-// case Labeler:
-// 	t.SetLabels(l)
-// default:
-// 	errSettingLabels = ErrInvalidValue
-// }
-// if errSettingLabels != nil {
-// 	return ErrSettingLabels
-// }
-// return nil
-// }
-
 func newFields() fields {
 	return fields{
 		Tagged: []field{},
 	}
 }
 
-func newLabeler(v interface{}, o Options) (labeler, error) {
+func newLabelee(v interface{}, o Options) (labeler, error) {
 	lbl := labeler{
 		Value:   v,
 		Options: o,
@@ -216,7 +201,6 @@ func newLabeler(v interface{}, o Options) (labeler, error) {
 	if !rv.CanAddr() || kind != reflect.Struct {
 		return lbl, ErrInvalidValue
 	}
-
 	return lbl, nil
 }
 
@@ -302,6 +286,7 @@ func (lbl *labeler) setLabels(l map[string]string) error {
 	o := lbl.Options
 	container := lbl.Fields.Container
 	if container != nil {
+
 		err := container.set(l, o)
 		if err != nil {
 			return ErrSettingLabels
@@ -310,11 +295,11 @@ func (lbl *labeler) setLabels(l map[string]string) error {
 	}
 	var err error
 	switch t := lbl.Value.(type) {
-	case GenericLabeler:
+	case GenericLabelee:
 		err = t.SetLabels(l, o.Tag)
-	case StrictLabeler:
+	case StrictLabelee:
 		err = t.SetLabels(l)
-	case Labeler:
+	case Labelee:
 		t.SetLabels(l)
 	default:
 		err = ErrSettingLabels
@@ -326,17 +311,17 @@ func (lbl *labeler) setLabels(l map[string]string) error {
 	return nil
 }
 
-func (lbl labeler) getRefKind() reflect.Kind {
+func (lbl labeler) refKind() reflect.Kind {
 	return lbl.RKind
 }
-func (lbl labeler) getRefType() reflect.Type {
+func (lbl labeler) refType() reflect.Type {
 	return lbl.RType
 }
-func (lbl labeler) getRefValue() reflect.Value {
+func (lbl labeler) refValue() reflect.Value {
 	return lbl.RValue
 }
 
-func (lbl labeler) getRefNumField() int {
+func (lbl labeler) refNumField() int {
 
 	return lbl.RType.NumField()
 }

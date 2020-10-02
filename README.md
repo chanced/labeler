@@ -37,13 +37,6 @@ labeler is fairly flexible when it comes to what all you can tag. It supports th
 | basic types                   | `string`, `bool`, `int`, `int64`, `int32`, `int16`, `int8`, `uint`, `uint64`, `uint32`, `uint16`, `uint8` |         Both |
 | time                          | `time.Time`, `time.Duration`                                                                              |         Both |
 
-**Note:** When using `UnmarshalerWithOpts` or `Unmarshaler`, you will receive the original
-`map[string]string`. If this turns out to be problematic, please let submit an issue and
-I'll change it so that the `map` is copied before invoking `v.UnmarshalLabels`.
-
-If `UnmarshalerWithOpts` and `Unmarshaler` are not implemented by `v`, the
-`map[string]string` returned will be a copy.
-
 ### Labels
 
 When unmarshaling, labeler needs a way to persist labels, regardless of whether or not they
@@ -57,9 +50,9 @@ Your available choices for `v` are:
 | :------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `labeler.UnmarshalerWithOpts`   | `UnmarshalLabels(v map[string]string, opts Options) error`                                                                                                                                                                                                    |
 | `labeler.Unmarshaler`           | `UnmarshalLabels(l map[string]string) error`                                                                                                                                                                                                                  |
-| `labeler.Labeler`               | `SetLabels(labels map[string]string)`                                                                                                                                                                                                                         |
-| `labeler.StrictLabeler`         | `SetLabels(labels map[string]string) error`                                                                                                                                                                                                                   |
-| `labeler.GenericLabeler`        | `SetLabels(labels map[string]string, token string) error`                                                                                                                                                                                                     |
+| `labeler.Labelee`               | `SetLabels(labels map[string]string)`                                                                                                                                                                                                                         |
+| `labeler.StrictLabelee`         | `SetLabels(labels map[string]string) error`                                                                                                                                                                                                                   |
+| `labeler.GenericLabelee`        | `SetLabels(labels map[string]string, token string) error`                                                                                                                                                                                                     |
 | `struct` with a container field | A `struct` with a field marked as being the container using `Options.ContainerToken` on any level of `v` or a field with the name matching `Options.ContainerField` that is any `type` above or an accessible `map[string]string`. (See [Options](#options)). |
 
 While marshaling, labeler will prioritize field values over those stored in your label
@@ -75,11 +68,12 @@ accessing the labels `map[string]string`.
 
 `input` must satisfy one of the following:
 
-| Interface / Type             | Signature                                 | Notes                                                                                      |
-| :--------------------------- | :---------------------------------------- | :----------------------------------------------------------------------------------------- |
-| `labeler.Labeled`            | `GetLabels() map[string]string`           |                                                                                            |
-| `labeler.GenericallyLabeled` | `GetLabels(tag string) map[string]string` | For when you have multiple label groups. See [this example](#example-using-multiple-tags). |
-| `map[string]string`          | `map[string]string`                       | You can pass in the `map[string]string` directly                                           |
+| Interface / Type             | Signature                                                                                        |
+| :--------------------------- | :----------------------------------------------------------------------------------------------- |
+| `labeler.Labeled`            | `GetLabels() map[string]string`                                                                  |
+| `labeler.GenericallyLabeled` | `GetLabels(tag string) map[string]string` <br> See [this example](#example-using-multiple-tags). |
+
+| `map[string]string` | `map[string]string` |
 
 ## Examples
 

@@ -72,8 +72,7 @@ accessing the labels `map[string]string`.
 | :--------------------------- | :------------------------------------------------------------------------------------------------- |
 | `labeler.Labeled`            | `GetLabels() map[string]string`                                                                    |
 | `labeler.GenericallyLabeled` | `GetLabels(tag string) map[string]string` <br> _See [this example](#example-using-multiple-tags)._ |
-
-| `map[string]string` | `map[string]string` |
+| `map[string]string`          | `map[string]string`                                                                                |
 
 ## Examples
 

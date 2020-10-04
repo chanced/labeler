@@ -24,7 +24,7 @@ go get github.com/chanced/labeler
 ## Value: `interface{}` defined
 
 Both Marshal and Unmarshal accept `v interface{}`, the value to marshal from or unmarshal
-into. `v` must be a non-`nil` pointer to a `struct` or a `value` that implements
+into. `v` must be pointer to a `struct` or a `type` that implements
 `labeler.MarshalWithOpts`, `labeler.Marshal`, `labeler.UnmarshalWithOpts`, or
 `labeler.Unmarshal` respectively.
 

@@ -425,7 +425,7 @@ It should be generic enough to be utilized in other circumstances as well though
 
 ### Feedback
 
-I'd love your feedback. Feel free to shoot me an email (chanceusc@gmail.com) or submit a ticket. Either way, I greatly appreciate it.
+I'd love your feedback. Feel free to shoot me an email (chanceusc@gmail.com) or submit a ticket. Either way, I'd greatly appreciate it.
 
 If you run into any issues or have any questions, please do submit a ticket.
 

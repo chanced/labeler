@@ -419,7 +419,7 @@ I'm building a project on Google Cloud Platform and the resources can have label
 response objects have a `GetLabels() map[string]string`. This package should be incredibly handy for anyone else on that
 platform.
 
-Having said that, I did my best to make this as generic as possible so it could be useful in other circumstances as well.
+I did my best to make this as generic as possible so it could be useful in other circumstances as well.
 I may, eventually, abstract out a lot of the logic and make a magic string
 package for struct tag parsing.
 

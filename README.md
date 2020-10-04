@@ -23,7 +23,6 @@ go get github.com/chanced/labeler
   - [Tokens](#tokens)
 - [Notes](#notes)
   - [Comments](#comments)
-  - [Motivation](#motivation)
   - [Prior Art](#prior-art)
   - [Feedback](#feedback)
 - [License (MIT)](#license)
@@ -414,10 +413,15 @@ Under the hood, each `struct` and each of its fields are analyzed in and process
 errors through a `chan`. This may not be the most performant means of handling construction of a schema, but as
 I was intent on learning go, it made sense for me to explore those mechanics within the language.
 
-### Motivation
+#### Motivation
 
-I'm building a project on Google Cloud Platform and the resources can have labels. As I'm using the grpc clients,
-the responses contain `GetLabels() map[string]string`.
+I'm building a project on Google Cloud Platform and the resources can have labels. I'm using the grpc clients so the
+response objects have a `GetLabels() map[string]string`. This package should be incredibly handy for anyone else on that
+platform.
+
+Having said that, I did my best to make this as generic as possible so it could be useful in other circumstances as well.
+I may, eventually, abstract out a lot of the logic and make a magic string
+package for struct tag parsing.
 
 ### Prior Art
 

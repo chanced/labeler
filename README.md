@@ -411,14 +411,14 @@ func main() {
 This is my first project in Go. I have no doubt that there are places that could use improvement
 and that the project, as a whole, could have been written more efficiently and cleaner overall.
 
-Under the hood, each `struct` and each of its fields are analyzed and processed in goroutines, passing the results and/or
+Having said that, I'm blow away by how performant Go is. I haven't benchmarked the package but the process is incredibly quick. Under the hood, each `struct` and each of its fields are analyzed and processed in goroutines, passing the results and/or
 errors through a `chan`.
 
 #### Motivation
 
 I'm building a project on Google Cloud Platform and the resources can have labels. I'm using the grpc clients so the
-response objects have a `GetLabels() map[string]string`. This package should be incredibly handy for anyone else on GCP.
-It should be generic enough to be utilized in other circumstances as well though.
+response objects have a`GetLabels() map[string]string` method. This package should be incredibly handy for anyone else on GCP.
+It is generic enough to be utilized in other circumstances as well though.
 
 ### Prior Art
 

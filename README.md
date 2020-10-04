@@ -8,10 +8,6 @@ A Go package for marshaling and unmarshaling `map[string]string` with struct tag
 go get github.com/chanced/labeler
 ```
 
-![myImage](https://media3.giphy.com/media/xT5LMx9pJT5Uvbs6D6/giphy.gif)
-
-<sup>source: [giphy](https://giphy.com/gifs/season-3-the-simpsons-3x13-xT5LMx9pJT5Uvbs6D6)</sup>
-
 ## Value: `interface{}` defined
 
 Both Marshal and Unmarshal accept `v interface{}`, the value to marshal from or unmarshal
@@ -23,20 +19,20 @@ into. `v` must be a non-`nil` pointer to a `struct` or a `value` that implements
 
 labeler is fairly flexible when it comes to what all you can tag. It supports the following types:
 
-| Interface / Type              | Signature                                                                                                                              |        Usage |
-| :---------------------------- | :------------------------------------------------------------------------------------------------------------------------------------- | -----------: |
-| `labeler.MarshalerWithOpts`   | `MarshalLabels(o labeler.Options) (map[string]string, error)`                                                                          |   Marshaling |
-| `labeler.Marshaler`           | `MarshalLabels() (map[string]string, error)`                                                                                           |   Marshaling |
-| `fmt.Stringer`                | `String() string`                                                                                                                      |   Marshaling |
-| `encoding.TextMarshaler`      | `MarshalText() (text []byte, err error)`                                                                                               |   Marshaling |
-| `labeler.UnmarshalerWithOpts` | `UnmarshalLabels(v map[string]string, opts Options) error`                                                                             | Unmarshaling |
-| `labeler.Unmarshaler`         | `UnmarshalLabels(l map[string]string) error`                                                                                           | Unmarshaling |
-| `Stringee`                    | `FromString(s string) error`                                                                                                           | Unmarshaling |
-| `encoding.TextUnmarshaler`    | `UnmarshalText(text []byte) error`                                                                                                     | Unmarshaling |
-| `struct`                      | can either implement any of the above interfaces or have fields with tags. Supports `n` level of nesting                               |         Both |
-| basic types                   | `string`, `bool`, `int`, `int64`, , `complex128`, `complex64`, `int32`, `int16`, `int8`, `uint`, `uint64`, `uint32`, `uint16`, `uint8` |         Both |
-| time                          | `time.Time`, `time.Duration`                                                                                                           |         Both |
-| pointer                       | pointer to any of the above                                                                                                            |
+| Interface / Type              | Signature                                                                                                                                                   |        Usage |
+| :---------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------- | -----------: |
+| `labeler.MarshalerWithOpts`   | `MarshalLabels(o labeler.Options) (map[string]string, error)`                                                                                               |   Marshaling |
+| `labeler.Marshaler`           | `MarshalLabels() (map[string]string, error)`                                                                                                                |   Marshaling |
+| `fmt.Stringer`                | `String() string`                                                                                                                                           |   Marshaling |
+| `encoding.TextMarshaler`      | `MarshalText() (text []byte, err error)`                                                                                                                    |   Marshaling |
+| `labeler.UnmarshalerWithOpts` | `UnmarshalLabels(v map[string]string, opts Options) error`                                                                                                  | Unmarshaling |
+| `labeler.Unmarshaler`         | `UnmarshalLabels(l map[string]string) error`                                                                                                                | Unmarshaling |
+| `Stringee`                    | `FromString(s string) error`                                                                                                                                | Unmarshaling |
+| `encoding.TextUnmarshaler`    | `UnmarshalText(text []byte) error`                                                                                                                          | Unmarshaling |
+| `struct`                      | can either implement any of the above interfaces or have fields with tags. Supports `n` level of nesting                                                    |         Both |
+| basic types                   | `string`, `bool`, `int`, `int64`, `int32`, `int16`, `int8`, `float64`, `float32`, `uint`, `uint64`, `uint32`, `uint16`, `uint8`, `complex128`, `complex64`, |         Both |
+| time                          | `time.Time`, `time.Duration`                                                                                                                                |         Both |
+| pointer                       | pointer to any of the above                                                                                                                                 |
 
 ### Labels
 
@@ -71,9 +67,9 @@ accessing the labels `map[string]string`.
 
 | Interface / Type             | Signature                                 | Example                                                    |
 | :--------------------------- | :---------------------------------------- | ---------------------------------------------------------- |
-| `labeler.Labeled`            | `GetLabels() map[string]string`           | [Example](#basic-example-with-accessor-mutator-for-labels) |
-| `labeler.GenericallyLabeled` | `GetLabels(tag string) map[string]string` | [Example](#example-using-multiple-tags).                   |
-| `map[string]string`          | `map[string]string`                       | [Example](#example-using-a-container-tag)                  |
+| `labeler.Labeled`            | `GetLabels() map[string]string`           | [example](#basic-example-with-accessor-mutator-for-labels) |
+| `labeler.GenericallyLabeled` | `GetLabels(tag string) map[string]string` | [example](#example-using-multiple-tags)                    |
+| `map[string]string`          | `map[string]string`                       | [example](#example-using-a-container-tag)                  |
 
 ## Examples
 

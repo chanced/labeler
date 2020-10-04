@@ -37,26 +37,28 @@ func newMeta(rv reflect.Value) meta {
 		TypeName: tname,
 		PkgPath:  pkgPath,
 	}
+	m.IsPtr = m.deref()
 	return m
 }
 func (m *meta) deref() bool {
-	if m.Kind == reflect.Ptr {
-		m.IsPtr = true
-		var ptr reflect.Value
-		if m.Value.IsNil() {
-			elem := m.Type.Elem()
-			ptr = reflect.New(elem)
-		} else {
-			ptr = m.Value
-		}
-		m.Ptr = m.Value
-		m.Value = ptr.Elem()
-		m.Type = ptr.Type()
-		m.Kind = ptr.Kind()
-		m.CanAddr = m.Value.CanAddr()
-		return true
+	if m.Kind != reflect.Ptr {
+		return false
 	}
-	return false
+	m.IsPtr = true
+	var ptr reflect.Value
+	if m.Value.IsNil() {
+		elem := m.Type.Elem()
+		ptr = reflect.New(elem)
+	} else {
+		ptr = m.Value
+	}
+	m.Ptr = m.Value
+	m.Value = ptr.Elem()
+	m.Type = ptr.Type()
+	m.Kind = ptr.Kind()
+	m.CanAddr = m.Value.CanAddr()
+	return true
+
 }
 
 func (m *meta) SetStructDetails() {

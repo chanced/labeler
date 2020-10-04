@@ -55,7 +55,7 @@ labeler is fairly flexible when it comes to what all you can tag. It supports th
 | `struct`                      | can either implement any of the above interfaces or have fields with tags. Supports `n` level of nesting                                                    |      Both |
 | basic types                   | `string`, `bool`, `int`, `int64`, `int32`, `int16`, `int8`, `float64`, `float32`, `uint`, `uint64`, `uint32`, `uint16`, `uint8`, `complex128`, `complex64`, |      Both |
 | time                          | `time.Time`, `time.Duration`                                                                                                                                |      Both |
-| pointer                       | pointer to any of the above                                                                                                                                 |
+| pointer                       | pointer to any of the above                                                                                                                                 |      Both |
 
 ### Labels
 

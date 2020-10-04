@@ -416,8 +416,7 @@ I was intent on learning go, it made sense for me to explore those mechanics wit
 #### Motivation
 
 I'm building a project on Google Cloud Platform and the resources can have labels. I'm using the grpc clients so the
-response objects have a `GetLabels() map[string]string`. This package should be incredibly handy for anyone else on that
-platform.
+response objects have a `GetLabels() map[string]string`. This package should be incredibly handy for anyone else on GCP.
 
 ### Prior Art
 

@@ -12,6 +12,14 @@ go get github.com/chanced/labeler
   - [Fields](#fields)
   - [Labels](#labels)
 - [Input (Unmarshal)](#input-unmarshal)
+- [Labeler Instance](#labeler-instance)
+- [Examples](#examples)
+  - [Basic with accessor / mutator for labels](#basic-example-with-accessor-mutator-for-labels)
+  - [With an enum](#example-with-an-enum)
+  - [Using a container tag](#example-using-a-container-tag)
+  - [Using multiple tags](#example-using-multiple-tags)
+- [Options](#options)
+- [Notes](#notes)
 
   |                                                                                                  |
   | -----------------------------------------------------------------------------------------------: |

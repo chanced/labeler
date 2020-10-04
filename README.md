@@ -21,6 +21,7 @@ go get github.com/chanced/labeler
 - [Options](#options)
   - [Settings](#settings)
   - [Tokens](#tokens)
+- [Errors](#errors)
 - [Notes](#notes)
   - [Comments](#comments)
   - [Prior Art](#prior-art)
@@ -397,6 +398,8 @@ func main() {
 | `IncludeEmptyToken`  | `"includeempty"`  | Token used to determine whether or not to assign empty / zero-value labels                                                                        | `OptIncludeEmptyToken(v string)`  |
 | `KeepToken`          |     `"keep"`      | Token used to set `KeepLabels` to `true`                                                                                                          | `OptKeepToken(v string)`          |
 | `DiscardToken`       |    `"discard"`    | Token used to set `KeepLabels` to `false`                                                                                                         | `OptDiscardToken(v string)`       |
+
+## Errors
 
 ## Notes
 

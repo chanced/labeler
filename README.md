@@ -418,6 +418,9 @@ I was intent on learning go, it made sense for me to explore those mechanics wit
 I'm building a project on Google Cloud Platform and the resources can have labels. I'm using the grpc clients so the
 response objects have a `GetLabels() map[string]string`. This package should be incredibly handy for anyone else on GCP.
 
+It should be generic enough to be utilized in other circumstances as well though. I made it as configurable as possible and
+I may, eventually, abstract out the core and make a magic string parser for struct tags.
+
 ### Prior Art
 
 - [go-env](https://github.com/Netflix/go-env) by Netflix. This is the only package that I looked at that does something similar. It was a huge help in getting started.

@@ -1,4 +1,4 @@
-# labeler
+# labeler 🏷️
 
 ## ⚠️⚠️⚠️ Not ready for usage yet ⚠️⚠️⚠️
 

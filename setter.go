@@ -3,22 +3,28 @@ package labeler
 import "reflect"
 
 type isetter = func(r reflected, o Options) setter
-type setter func(r reflected, kvs keyvalueSet, o Options) error
+type setter func(kvs keyvalueSet, o Options) error
 type fieldSetter func(f *field, kvs keyvalueSet, o Options) error
 type fieldStrSetter func(f *field, s string, o Options) error
 
+var iFieldSetters []isetter = []isetter{
+	pkgFieldStrSetters,
+	basicFieldStrSetters,
+}
+
 func (fs fieldSetter) setter(r reflected, o Options) setter {
-	if r.topic() != fieldTopic {
+	f, ok := r.(*field)
+	if !ok {
 		return nil
 	}
-	var f setter = func(r reflected, kvs keyvalueSet, o Options) error {
-		f := r.(*field)
+	var set setter = func(kvs keyvalueSet, o Options) error {
 		return fs(f, kvs, o)
 	}
-	return f
+	return set
 }
 
 func (fss fieldStrSetter) setter(r reflected, o Options) setter {
+
 	var fs fieldSetter = func(f *field, kvs keyvalueSet, o Options) error {
 		kv, ok := kvs.Get(f.Key, f.ignoreCase(o))
 		if o.OmitEmpty && !ok {
@@ -29,17 +35,12 @@ func (fss fieldStrSetter) setter(r reflected, o Options) setter {
 	return fs.setter(r, o)
 }
 
-var getFieldSetter isetter = func(r reflected, o Options) setter {
-
-	pkgsetter := getPkgFieldSetter(r, o)
-}
-
-var getPkgieldSetter isetter = func(r reflected, o Options) setter {
+var pkgFieldStrSetters isetter = func(r reflected, o Options) setter {
 	if r.topic() != fieldTopic {
 		return nil
 	}
 	m := r.Meta()
-	if pset, ok := pkgFieldSetters[m.PkgPath]; ok {
+	if pset, ok := pkgFieldSettersLookup[m.PkgPath]; ok {
 		if fss, ok := pset[m.TypeName]; ok {
 			return fss.setter(r, o)
 		}
@@ -47,11 +48,8 @@ var getPkgieldSetter isetter = func(r reflected, o Options) setter {
 	return nil
 }
 
-type fieldStrSetters = map[string]fieldStrSetter
-type pkgSetters = map[string]fieldStrSetters
-
-var pkgFieldSetters pkgSetters = pkgSetters{
-	"time": fieldStrSetters{
+var pkgFieldSettersLookup map[string]map[string]fieldStrSetter = map[string]map[string]fieldStrSetter{
+	"time": {
 		"Time": func(f *field, s string, o Options) error {
 			return f.setTime(s, o)
 		},
@@ -61,7 +59,14 @@ var pkgFieldSetters pkgSetters = pkgSetters{
 	},
 }
 
-var basicFieldSetters = map[reflect.Kind]fieldStrSetter{
+var basicFieldStrSetters isetter = func(r reflected, o Options) setter {
+	if fss, ok := basicFieldStrSettersMap[r.Meta().Kind]; ok {
+		return fss.setter(r, o)
+	}
+	return nil
+}
+
+var basicFieldStrSettersMap = map[reflect.Kind]fieldStrSetter{
 	reflect.Bool: func(f *field, s string, o Options) error {
 		return f.setBool(s, o)
 	},

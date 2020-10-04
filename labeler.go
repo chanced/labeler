@@ -21,8 +21,14 @@ func (lbl Labeler) ValidateOptions() error {
 }
 
 //Unmarshal input into v using the Option(s) provided to Labeler
-func (lbl *Labeler) Unmarshal(input interface{}, v interface{}) error {
-	// err := lbl.initFields()
+func (lbl *Labeler) Unmarshal(input interface{}, v interface{}, opts ...Option) error {
+	o := newOptions(opts)
+	sub := newSubject(v, o)
+	err := sub.init(o)
+	if err != nil {
+		return err
+	}
+
 	// if err != nil {
 	// 	return err
 	// }

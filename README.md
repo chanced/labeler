@@ -8,6 +8,16 @@ A Go package for marshaling and unmarshaling `map[string]string` with struct tag
 go get github.com/chanced/labeler
 ```
 
+- [Value: `interface{}` defined](#value-interface-defined)
+  - [Fields](#fields)
+  - [Labels](#labels)
+- [Input (Unmarshal)](#input-unmarshal)
+
+  |                                                                                                  |
+  | -----------------------------------------------------------------------------------------------: |
+  |                          ![myImage](https://media3.giphy.com/media/xT5LMx9pJT5Uvbs6D6/giphy.gif) |
+  | <sup>source: [giphy](https://giphy.com/gifs/season-3-the-simpsons-3x13-xT5LMx9pJT5Uvbs6D6)</sup> |
+
 ## Value: `interface{}` defined
 
 Both Marshal and Unmarshal accept `v interface{}`, the value to marshal from or unmarshal
@@ -49,7 +59,7 @@ Your available choices for `v` are:
 | `labeler.Unmarshaler`           | `UnmarshalLabels(l map[string]string) error`                                                                                                                                                                                                                  |
 | `labeler.Labelee`               | `SetLabels(labels map[string]string)`                                                                                                                                                                                                                         |
 | `labeler.StrictLabelee`         | `SetLabels(labels map[string]string) error`                                                                                                                                                                                                                   |
-| `labeler.GenericLabelee`        | `SetLabels(labels map[string]string, token string) error`                                                                                                                                                                                                     |
+| `labeler.GenericLabelee`        | `SetLabels(labels map[string]string, tag string) error`                                                                                                                                                                                                       |
 | `struct` with a container field | A `struct` with a field marked as being the container using `Options.ContainerToken` on any level of `v` or a field with the name matching `Options.ContainerField` that is any `type` above or an accessible `map[string]string`. (See [Options](#options)). |
 
 While marshaling, labeler will prioritize field values over those stored in your label
@@ -348,6 +358,7 @@ func main() {
 | `RequireAllFields`    |      `false`      | If `true`, all fields are required by default. An `ParsingError` will be returned from `Unmarshal` containing a `FieldError` for each field that was not present in the labels                                                      | `OptRequireAllFields()`                |
 | `KeepLabels`          |      `true`       | Indicates whether or not labels that have been assigned to values are kept in the labels `map[string]string` when unmarshaling.                                                                                                     | `OptKeepLabels()` `OptDiscardLabels()` |
 | `IgnoreCase`          |      `true`       | If `true`, label keys are matched regardless of case. Setting this to `false` makes all keys case sensitive. This can be overriden at the field level.                                                                              | `OptCaseSensitive()`                   |
+| `OmitEmpty`           |      `true`       | Determines whether or not to set zero-value when marshaling and unmarshaling.                                                                                                                                                       | `OptOmitEmpty()` `OptIncludeEmpty()`   |
 | `TimeFormat`          |       `""`        | Default format / layout to use when formatting `time.Time`. Field level formats can be provided with either `format` (configurable) or `timeformat` (configurable)                                                                  | `OptTimeFormat(v string)`              |
 | `IntBase`             |       `10`        | default base while parsing int, int64, int32, int16, int8                                                                                                                                                                           | `OptIntBase(b int)`                    |
 | `UintBase`            |       `10`        | default base while parsing uint, uint64, uint32, uint16, uint8                                                                                                                                                                      | `OptUintBase(b int)`                   |
@@ -362,9 +373,11 @@ func main() {
 | `DefaultToken`        |    `"default"`    | Token to provide a default value if one is not set. Stylistic.                                                                                                                                                                      | `OptDefaultToken(v string)`            |
 | `BaseToken`           |     `"base"`      | sets the token for parsing base of int, int64, int32, int16, int8, uint, uint64, uint32, uint16, and uint8 at the field level                                                                                                       | `OptBaseToken(v string)`               |
 | `IntBaseToken`        |    `"intbase"`    | sets the token for parsing base of int, int64, int32, int16, int8, at the container or field level                                                                                                                                  | `OptIntBaseToken(v string)`            |
-| `UintBaseToken`       |   `"uintbase"`    | sets the token for parsing base of uint, uint64, uint32, uint16, uint8, at the container or field level                                                                                                                             | ``OptUintToken(v string)`              |
+| `UintBaseToken`       |   `"uintbase"`    | sets the token for parsing base of uint, uint64, uint32, uint16, uint8, at the container or field level                                                                                                                             | `OptUintToken(v string)`               |
 | `CaseSensitiveToken`  | `"casesensitive"` | Token used to set `IgnoreCase` to `false`                                                                                                                                                                                           | `OptCaseSensitiveToken(v string)`      |
 | `IgnoreCaseToken`     |  `"ignorecase"`   | Token used to determine whether or not to ignore case of the field's (or all fields if on container) key                                                                                                                            | `OptIgnoreCaseToken(v string)`         |
+| `OmitEmptyToken`      |   `"omitempty"`   | Token used to determine whether or not to assign empty / zero-value labels                                                                                                                                                          | `OptOmitEmptyToken(v string)`          |
+| `IncludeEmptyToken`   | `"includeempty"`  | Token used to determine whether or not to assign empty / zero-value labels                                                                                                                                                          | `OptIncludeEmptyToken(v string)`       |
 | `KeepToken`           |     `"keep"`      | Token used to set `KeepLabels` to `true`                                                                                                                                                                                            | `OptKeepToken(v string)`               |
 | `DiscardToken`        |    `"discard"`    | Token used to set `KeepLabels` to `false`                                                                                                                                                                                           | `OptDiscardToken(v string)`            |
 | `CaseSensitiveTokens` |      `true`       | Determines whether or not tokens, such as `required` and `ignorecase`, are case sensitive. This does not affect whether a label's key is case sensitive.                                                                            | `OptCaseSensitiveTokens(v bool)`       |

@@ -11,7 +11,7 @@ import (
 type field struct {
 	meta
 	Tag         *Tag
-	Parent      *field
+	Parent      reflected
 	Name        string
 	Path        string
 	Key         string
@@ -21,7 +21,7 @@ type field struct {
 	IsContainer bool
 }
 
-func newField(sf reflect.StructField, rv reflect.Value, parent *field, o Options) (*field, error) {
+func newField(sf reflect.StructField, rv reflect.Value, parent reflected, o Options) (*field, error) {
 	fieldName := sf.Name
 	f := &field{
 		Name:   fieldName,
@@ -38,9 +38,14 @@ func newField(sf reflect.StructField, rv reflect.Value, parent *field, o Options
 	if !f.CanAddr {
 		return f, nil
 	}
-
 	return f, nil
+}
 
+func (f *field) ignoreCase(o Options) bool {
+	if f.Tag.IgnoreCaseIsSet {
+		return f.Tag.IgnoreCase
+	}
+	return o.IgnoreCase
 }
 
 func (f *field) parseTag(sf reflect.StructField, o Options) error {
@@ -69,10 +74,11 @@ func (f *field) setIsContainer(o Options) {
 }
 
 func (f *field) setPath() {
-	f.Path = f.Name
-	if f.Parent != nil {
-		f.Path = fmt.Sprintf("%s.%s", f.Parent.Path, f.Path)
-	}
+	f.Path = fmt.Sprintf("%s.%s", f.Parent.path(), f.Name)
+}
+
+func (f *field) path() string {
+	return f.Path
 }
 
 func (f *field) err(err error) *FieldError {
@@ -283,6 +289,11 @@ func (f *field) setDuration(s string, o Options) error {
 
 func (f *field) topic() topic {
 	return fieldTopic
+}
+
+func (f *field) Save() {
+	f.save()
+	f.Parent.Save()
 }
 
 var labelMapType reflect.Type = reflect.TypeOf(map[string]string{})

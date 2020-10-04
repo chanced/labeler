@@ -13,6 +13,10 @@ func getDefaultOptions() Options {
 		ComplexFormat:       'f',
 		IntBase:             10,
 		UintBase:            10,
+		OmitEmpty:           true,
+		IgnoreCase:          true,
+		KeepLabels:          true,
+		RequireAllFields:    false,
 		DefaultToken:        "default",
 		FormatToken:         "format",
 		FloatFormatToken:    "floatformat",
@@ -21,6 +25,8 @@ func getDefaultOptions() Options {
 		RequiredToken:       "required",
 		NotRequiredToken:    "notrequired",
 		CaseSensitiveToken:  "casesensitive",
+		OmitEmptyToken:      "omitempty",
+		IncludeEmptyToken:   "includeempty",
 		IgnoreCaseToken:     "ignorecase",
 		KeepToken:           "keep",
 		DiscardToken:        "discard",
@@ -31,9 +37,6 @@ func getDefaultOptions() Options {
 		AssignmentStr:       ":",
 		TimeFormat:          "",
 		ContainerField:      "",
-		IgnoreCase:          true,
-		KeepLabels:          true,
-		RequireAllFields:    false,
 		CaseSensitiveTokens: true,
 	}
 
@@ -65,14 +68,23 @@ type Options struct {
 
 	// 	default: true
 	// KeepLabels Determines whether or not to keep labels that were unmarshaled into
-	// other fields. Individual fields can override this setting at the field level by
-	// appending "discard," "keep" or configured KeepToken or DiscardToken.
+	// fields. Individual fields can override this setting at the field level by
+	// appending the KeepToken (default: "keep") or the DiscardToken (default: "discard").
 	// Example: MyField string `label:"myField,keep"`
 	// Example: MyField string `label:"myField, discard"`
-	// Example: MyField string `label:"myField, mycustomdiscard"` (set in options)
-	// This can also be set with by attaching keep or discard to the wildcard,
-	// `label:"*, keep"` or `label:"*, discard"
+
+	// This can be set at the container level
+	// Example: `label:"*, keep"` or `label:"*, discard"`
 	KeepLabels bool
+
+	// 	default: true
+	// OmitEmpty Determines whether or not to assign labels that were empty / zero value
+	// Individual fields can override this setting at the field level by appending
+	// OmitEmptyToken (default: "omitempty") or IncludeEmptyToken (default: "incldueempty")
+	// This can also be set with by attaching
+	// This can be set at the container level
+	// Example: `label:"*, omitempty"` or `label:"*, includeempty"`
+	OmitEmpty bool
 
 	// 	default: false
 	// RequireAllFields Determines whether or not all fields are required
@@ -155,6 +167,16 @@ type Options struct {
 	// IgnoreCaseToken is the token used at the tag level to indicate that the key for the labels lookup
 	// is case insensitive regardless of global settings
 	IgnoreCaseToken string `option:"token"`
+
+	// 	default: `omitempty`
+	// OmitEmptyToken is the token used at the tag level to determine whether or not to include empty, zero
+	// values in the labels and whether to assign empty values.
+	OmitEmptyToken string `option:"token"`
+
+	// 	default: `includeempty`
+	// IncludeEmptyToken is the token used at the tag level to determine whether or not to include empty, zero
+	// values in the labels and whether to assign empty values.
+	IncludeEmptyToken string `option:"token"`
 
 	// 	default: ":"
 	// AssignmentStr is used to assign values, such as default (default value) or format
@@ -452,20 +474,20 @@ func newOptions(opts []Option) Options {
 
 func (o *Options) tokenSensitivity() {
 	if !o.CaseSensitiveTokens {
-		o.IgnoreCaseToken = strings.ToLower(o.IgnoreCaseToken)
-		o.CaseSensitiveToken = strings.ToLower(o.CaseSensitiveToken)
-		o.RequiredToken = strings.ToLower(o.RequiredToken)
-		o.NotRequiredToken = strings.ToLower(o.NotRequiredToken)
-		o.DiscardToken = strings.ToLower(o.DiscardToken)
-		o.KeepToken = strings.ToLower(o.KeepToken)
-		o.DefaultToken = strings.ToLower(o.DefaultToken)
-		o.FormatToken = strings.ToLower(o.FormatToken)
-		o.ComplexFormatToken = strings.ToLower(o.ComplexFormatToken)
-		o.FloatFormatToken = strings.ToLower(o.FloatFormatToken)
-		o.TimeFormatToken = strings.ToLower(o.TimeFormatToken)
-		o.UintBaseToken = strings.ToLower(o.UintBaseToken)
-		o.IntBaseToken = strings.ToLower(o.IntBaseToken)
-
+		rv := reflect.ValueOf(o)
+		rt := reflect.TypeOf(o)
+		numField := rt.NumField()
+		for i := 0; i < numField; i++ {
+			fv := rv.Field(i)
+			sf := rt.Field(i)
+			if t, tagged := sf.Tag.Lookup("option"); tagged {
+				if t == "token" {
+					v := fv.String()
+					v = strings.ToLower(v)
+					fv.SetString(v)
+				}
+			}
+		}
 	}
 }
 

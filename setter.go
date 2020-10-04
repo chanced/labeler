@@ -2,15 +2,56 @@ package labeler
 
 import "reflect"
 
-type setter func(r reflected, s string, o Options) error
-type isetter = func(r reflected) setter
+type isetter = func(r reflected, o Options) setter
+type setter func(r reflected, kvs keyvalueSet, o Options) error
+type fieldSetter func(f *field, kvs keyvalueSet, o Options) error
+type fieldStrSetter func(f *field, s string, o Options) error
 
-type fieldSetter func(f *field, s string, o Options) error
-type pkgSetters = map[string]typeFieldSetters
-type typeFieldSetters = map[string]fieldSetter
+func (fs fieldSetter) setter(r reflected, o Options) setter {
+	if r.topic() != fieldTopic {
+		return nil
+	}
+	var f setter = func(r reflected, kvs keyvalueSet, o Options) error {
+		f := r.(*field)
+		return fs(f, kvs, o)
+	}
+	return f
+}
+
+func (fss fieldStrSetter) setter(r reflected, o Options) setter {
+	var fs fieldSetter = func(f *field, kvs keyvalueSet, o Options) error {
+		kv, ok := kvs.Get(f.Key, f.ignoreCase(o))
+		if o.OmitEmpty && !ok {
+			return nil
+		}
+		return fss(f, kv.Value, o)
+	}
+	return fs.setter(r, o)
+}
+
+var getFieldSetter isetter = func(r reflected, o Options) setter {
+
+	pkgsetter := getPkgFieldSetter(r, o)
+}
+
+var getPkgieldSetter isetter = func(r reflected, o Options) setter {
+	if r.topic() != fieldTopic {
+		return nil
+	}
+	m := r.Meta()
+	if pset, ok := pkgFieldSetters[m.PkgPath]; ok {
+		if fss, ok := pset[m.TypeName]; ok {
+			return fss.setter(r, o)
+		}
+	}
+	return nil
+}
+
+type fieldStrSetters = map[string]fieldStrSetter
+type pkgSetters = map[string]fieldStrSetters
 
 var pkgFieldSetters pkgSetters = pkgSetters{
-	"time": typeFieldSetters{
+	"time": fieldStrSetters{
 		"Time": func(f *field, s string, o Options) error {
 			return f.setTime(s, o)
 		},
@@ -20,7 +61,7 @@ var pkgFieldSetters pkgSetters = pkgSetters{
 	},
 }
 
-var basicFieldSetters = map[reflect.Kind]fieldSetter{
+var basicFieldSetters = map[reflect.Kind]fieldStrSetter{
 	reflect.Bool: func(f *field, s string, o Options) error {
 		return f.setBool(s, o)
 	},

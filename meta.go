@@ -1,8 +1,24 @@
 package labeler
 
 import (
-	"fmt"
 	"reflect"
+)
+
+type reflected interface {
+	Meta() meta
+	Save()
+	topic() topic
+	path() string
+	numField() int
+}
+
+type topic int
+
+const (
+	invalidTopic = iota
+	fieldTopic
+	subjectTopic
+	inputTopic
 )
 
 type meta struct {
@@ -71,10 +87,16 @@ func (m *meta) IsStruct() bool {
 	return m.Kind == reflect.Struct
 }
 
+func (m *meta) save() {
+	if m.IsPtr {
+		m.Ptr.Set(m.Value)
+	}
+}
+
 func (m meta) Meta() meta {
 	return m
 }
 
-func (m *meta) GetTypePath() string {
-	return fmt.Sprintf("%s.%s", m.PkgPath, m.TypeName)
+func (m meta) numField() int {
+	return m.NumField
 }

@@ -10,18 +10,16 @@ type keyvalue struct {
 type keyvalueSet struct {
 	set      map[string]*keyvalue
 	lcaseSet map[string]*keyvalue
-	vMap     map[string]string // to reduce cycling over set
+	m        map[string]string
 }
 
-func newKeyValueSet(m map[string]string) {
+func newKeyvalueSet(m map[string]string) {
 	kvs := keyvalueSet{
 		set:      make(map[string]*keyvalue),
 		lcaseSet: make(map[string]*keyvalue),
-		vMap:     make(map[string]string),
+		m:        make(map[string]string),
 	}
-	for k, v := range m {
-		kvs.Set(k, v)
-	}
+	kvs.Add(m)
 }
 
 func (kvs *keyvalueSet) Get(key string, ignorecase bool) (keyvalue, bool) {
@@ -39,15 +37,24 @@ func (kvs *keyvalueSet) Set(key string, v string) {
 	kv := &keyvalue{Key: key, Value: v}
 	kvs.set[key] = kv
 	kvs.lcaseSet[strings.ToLower(key)] = kv
-	kvs.vMap[key] = v
+	kvs.m[key] = v
 }
 
-func (kvs *keyvalueSet) GetMap() map[string]string {
-	return kvs.vMap
+func (kvs *keyvalueSet) Map() map[string]string {
+	return kvs.m
 }
 
-func (kvs *keyvalueSet) DeleteFromMap(key string) {
-	// delete(kvs.set, key)
-	// delete(kvs.lcaseSet, strings.ToLower(key))
-	delete(kvs.vMap, key)
+func (kvs *keyvalueSet) Delete(key string) {
+	delete(kvs.m, key)
+	delete(kvs.set, key)
+	delete(kvs.lcaseSet, strings.ToLower(key))
+}
+
+func (kvs *keyvalueSet) Add(m map[string]string) {
+	for k, v := range m {
+		kvs.Set(k, v)
+	}
+}
+func (kvs *keyvalueSet) AddSet(v keyvalueSet) {
+	kvs.Add(kvs.Map())
 }

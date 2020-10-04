@@ -7,17 +7,15 @@ import (
 
 // should rename this
 type channels struct {
-	fieldCh     chan *field
-	errCh       chan error
-	reflected   reflected
-	waitGroup   *sync.WaitGroup
-	fieldParent *field
-	options     Options
+	fieldCh   chan *field
+	errCh     chan error
+	reflected reflected
+	waitGroup *sync.WaitGroup
+	options   Options
 }
 
 func newChannels(r reflected, o Options) channels {
-	m := r.Meta()
-	i := m.NumField
+	i := r.numField()
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 
@@ -26,9 +24,6 @@ func newChannels(r reflected, o Options) channels {
 		fieldCh:   make(chan *field, i),
 		errCh:     make(chan error, i),
 		waitGroup: wg,
-	}
-	if r.topic() == fieldTopic {
-		ch.fieldParent = r.(*field)
 	}
 
 	return ch
@@ -82,7 +77,7 @@ func (ch channels) processFields() {
 
 func (ch channels) processField(structField reflect.StructField, valueField reflect.Value) {
 	defer ch.waitGroup.Done()
-	f, err := newField(structField, valueField, ch.fieldParent, ch.options)
+	f, err := newField(structField, valueField, ch.reflected, ch.options)
 	if err != nil {
 		ch.errCh <- err
 	}

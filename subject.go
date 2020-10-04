@@ -25,10 +25,11 @@ func (sub *subject) topic() topic {
 	return subjectTopic
 }
 
+func (sub *subject) Save() {
+	sub.save()
+}
+
 func (sub *subject) init(o Options) error {
-	if ok := sub.deref(); !ok {
-		return ErrInvalidValue
-	}
 
 	ch := newChannels(sub, o)
 	go ch.processFields()
@@ -67,4 +68,8 @@ func (sub *subject) init(o Options) error {
 
 	sub.options = o
 	return nil
+}
+
+func (sub *subject) path() string {
+	return ""
 }

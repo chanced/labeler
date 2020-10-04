@@ -4,13 +4,13 @@
 
 A Go package for marshaling and unmarshaling `map[string]string` with struct tags.
 
-![myImage](https://media3.giphy.com/media/xT5LMx9pJT5Uvbs6D6/giphy.gif)
-
-<sup>source: [giphy](https://giphy.com/gifs/season-3-the-simpsons-3x13-xT5LMx9pJT5Uvbs6D6)</sup>
-
 ```bash
 go get github.com/chanced/labeler
 ```
+
+![myImage](https://media3.giphy.com/media/xT5LMx9pJT5Uvbs6D6/giphy.gif)
+
+<sup>source: [giphy](https://giphy.com/gifs/season-3-the-simpsons-3x13-xT5LMx9pJT5Uvbs6D6)</sup>
 
 ## Value: `interface{}` defined
 
@@ -23,19 +23,20 @@ into. `v` must be a non-`nil` pointer to a `struct` or a `value` that implements
 
 labeler is fairly flexible when it comes to what all you can tag. It supports the following types:
 
-| Interface / Type              | Signature                                                                                                 |        Usage |
-| :---------------------------- | :-------------------------------------------------------------------------------------------------------- | -----------: |
-| `labeler.MarshalerWithOpts`   | `MarshalLabels(o labeler.Options) (map[string]string, error)`                                             |   Marshaling |
-| `labeler.Marshaler`           | `MarshalLabels() (map[string]string, error)`                                                              |   Marshaling |
-| `fmt.Stringer`                | `String() string`                                                                                         |   Marshaling |
-| `encoding.TextMarshaler`      | `MarshalText() (text []byte, err error)`                                                                  |   Marshaling |
-| `labeler.UnmarshalerWithOpts` | `UnmarshalLabels(v map[string]string, opts Options) error`                                                | Unmarshaling |
-| `labeler.Unmarshaler`         | `UnmarshalLabels(l map[string]string) error`                                                              | Unmarshaling |
-| `Stringee`                    | `FromString(s string) error`                                                                              | Unmarshaling |
-| `encoding.TextUnmarshaler`    | `UnmarshalText(text []byte) error`                                                                        | Unmarshaling |
-| `struct`                      | can either implement any of the above interfaces or have fields with tags. Supports `n` level of nesting  |         Both |
-| basic types                   | `string`, `bool`, `int`, `int64`, `int32`, `int16`, `int8`, `uint`, `uint64`, `uint32`, `uint16`, `uint8` |         Both |
-| time                          | `time.Time`, `time.Duration`                                                                              |         Both |
+| Interface / Type              | Signature                                                                                                                              |        Usage |
+| :---------------------------- | :------------------------------------------------------------------------------------------------------------------------------------- | -----------: |
+| `labeler.MarshalerWithOpts`   | `MarshalLabels(o labeler.Options) (map[string]string, error)`                                                                          |   Marshaling |
+| `labeler.Marshaler`           | `MarshalLabels() (map[string]string, error)`                                                                                           |   Marshaling |
+| `fmt.Stringer`                | `String() string`                                                                                                                      |   Marshaling |
+| `encoding.TextMarshaler`      | `MarshalText() (text []byte, err error)`                                                                                               |   Marshaling |
+| `labeler.UnmarshalerWithOpts` | `UnmarshalLabels(v map[string]string, opts Options) error`                                                                             | Unmarshaling |
+| `labeler.Unmarshaler`         | `UnmarshalLabels(l map[string]string) error`                                                                                           | Unmarshaling |
+| `Stringee`                    | `FromString(s string) error`                                                                                                           | Unmarshaling |
+| `encoding.TextUnmarshaler`    | `UnmarshalText(text []byte) error`                                                                                                     | Unmarshaling |
+| `struct`                      | can either implement any of the above interfaces or have fields with tags. Supports `n` level of nesting                               |         Both |
+| basic types                   | `string`, `bool`, `int`, `int64`, , `complex128`, `complex64`, `int32`, `int16`, `int8`, `uint`, `uint64`, `uint32`, `uint16`, `uint8` |         Both |
+| time                          | `time.Time`, `time.Duration`                                                                                                           |         Both |
+| pointer                       | pointer to any of the above                                                                                                            |
 
 ### Labels
 
@@ -68,15 +69,15 @@ accessing the labels `map[string]string`.
 
 `input` must satisfy one of the following:
 
-| Interface / Type             | Signature                                 | Example                                              |
-| :--------------------------- | :---------------------------------------- | ---------------------------------------------------- |
-| `labeler.Labeled`            | `GetLabels() map[string]string`           |
-| `labeler.GenericallyLabeled` | `GetLabels(tag string) map[string]string` | [Multiple containers](#example-using-multiple-tags). |
-| `map[string]string`          | `map[string]string`                       |
+| Interface / Type             | Signature                                 | Example                                                    |
+| :--------------------------- | :---------------------------------------- | ---------------------------------------------------------- |
+| `labeler.Labeled`            | `GetLabels() map[string]string`           | [Example](#basic-example-with-accessor-mutator-for-labels) |
+| `labeler.GenericallyLabeled` | `GetLabels(tag string) map[string]string` | [Example](#example-using-multiple-tags).                   |
+| `map[string]string`          | `map[string]string`                       | [Example](#example-using-a-container-tag)                  |
 
 ## Examples
 
-### Basic example with accessor / mutator for Labels
+### Basic example with accessor / mutator for labels
 
 ```go
 package main
@@ -151,7 +152,7 @@ func main() {
 		"uint16":          "123",
 		"uint8":           "1",
 		"FloatWithFormat": "123.234823484",
-		"dedupe":          "Demonstrates that discard is removed from the Labels after field value is set",
+		"dedupe":          "Will be removed from the Labels after field value is set",
 		"case":            "value should not be set due to not matching case",
 		"nested_field":    "nested value",
 	}
@@ -263,8 +264,8 @@ var colorMapToStr map[Color]string = map[Color]string{
 
 func getColorMapFromStr() map[string]Color {
 	m := make(map[string]Color)
-	for key, value := range colorMapToStr {
-		m[value] = key
+	for k, v := range colorMapToStr {
+		m[v] = k
 	}
 	return m
 }
@@ -352,18 +353,25 @@ func main() {
 | `KeepLabels`          |      `true`       | Indicates whether or not labels that have been assigned to values are kept in the labels `map[string]string` when unmarshaling.                                                                                                     | `OptKeepLabels()` `OptDiscardLabels()` |
 | `IgnoreCase`          |      `true`       | If `true`, label keys are matched regardless of case. Setting this to `false` makes all keys case sensitive. This can be overriden at the field level.                                                                              | `OptCaseSensitive()`                   |
 | `TimeFormat`          |       `""`        | Default format / layout to use when formatting `time.Time`. Field level formats can be provided with either `format` (configurable) or `timeformat` (configurable)                                                                  | `OptTimeFormat(v string)`              |
+| `IntBase`             |       `10`        | default base while parsing int, int64, int32, int16, int8                                                                                                                                                                           | `OptIntBase(b int)`                    |
+| `UintBase`            |       `10`        | default base while parsing uint, uint64, uint32, uint16, uint8                                                                                                                                                                      | `OptUintBase(b int)`                   |
+| `ComplexFormat`       |       `'f'`       | Default format to use when formatting `complex` values.                                                                                                                                                                             | `OptComplexFormat(f byte)`             |
 | `FloatFormat`         |       `'f'`       | Default format to use when formatting `float` values.                                                                                                                                                                               | `OptFloatFormat(f byte)`               |
 | `FormatToken`         |    `"format"`     | Token to set the field-level formatting for `time` and `float`.                                                                                                                                                                     | `OptFormatToken(v string)`             |
+| `ComplexFormatToken`  | `"complexformat"` | Token used to set `ComplexFormat`. This is really only relevant on container fields as `FormatToken` can be used at the field level.                                                                                                | `OptComplexFormatToken(v string)`      |
 | `FloatFormatToken`    |  `"floatformat"`  | Token used to set `FloatFormat`. This is really only relevant on container fields as `FormatToken` can be used at the field level.                                                                                                  | `OptFloatFormatToken(v string)`        |
 | `TimeFormatToken`     |  `"timeformat"`   | Token used to set `TimeFormat`. This is really only relevant on container fields as `FormatToken` can be used at the field level.                                                                                                   | `OptTimeFormatToken(v string)`         |
 | `RequiredToken`       |   `"required"`    | Token to mark a field as required. If applied to a container, all fields are required unless `NotRequiredToken` is present.                                                                                                         | `OptRequiredToken(v string)`           |
 | `NotRequiredToken`    |  `"notrequired"`  | Token to mark a field as not required. Only relevant if `RequireAllFields` has been set to `true`.                                                                                                                                  | `OptRequiredToken(v string)`           |
 | `DefaultToken`        |    `"default"`    | Token to provide a default value if one is not set. Stylistic.                                                                                                                                                                      | `OptDefaultToken(v string)`            |
+| `BaseToken`           |     `"base"`      | sets the token for parsing base of int, int64, int32, int16, int8, uint, uint64, uint32, uint16, and uint8 at the field level                                                                                                       | `OptBaseToken(v string)`               |
+| `IntBaseToken`        |    `"intbase"`    | sets the token for parsing base of int, int64, int32, int16, int8, at the container or field level                                                                                                                                  | `OptIntBaseToken(v string)`            |
+| `UintBaseToken`       |   `"uintbase"`    | sets the token for parsing base of uint, uint64, uint32, uint16, uint8, at the container or field level                                                                                                                             | ``OptUintToken(v string)`              |
 | `CaseSensitiveToken`  | `"casesensitive"` | Token used to set `IgnoreCase` to `false`                                                                                                                                                                                           | `OptCaseSensitiveToken(v string)`      |
 | `IgnoreCaseToken`     |  `"ignorecase"`   | Token used to determine whether or not to ignore case of the field's (or all fields if on container) key                                                                                                                            | `OptIgnoreCaseToken(v string)`         |
 | `KeepToken`           |     `"keep"`      | Token used to set `KeepLabels` to `true`                                                                                                                                                                                            | `OptKeepToken(v string)`               |
 | `DiscardToken`        |    `"discard"`    | Token used to set `KeepLabels` to `false`                                                                                                                                                                                           | `OptDiscardToken(v string)`            |
-| `CaseSensitiveTokens` |      `false`      | Determines whether or not tokens, such as `required` and `ignorecase`, are case sensitive. This does not affect whether a label's key is case sensitive.                                                                            | `OptCaseSensitiveTokens(v bool)`       |
+| `CaseSensitiveTokens` |      `true`       | Determines whether or not tokens, such as `required` and `ignorecase`, are case sensitive. This does not affect whether a label's key is case sensitive.                                                                            | `OptCaseSensitiveTokens(v bool)`       |
 
 ## License
 

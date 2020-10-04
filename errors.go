@@ -3,24 +3,22 @@ package labeler
 import (
 	"errors"
 	"fmt"
-	"regexp"
 	"strings"
 )
 
 var (
-
+	// ErrInvalidValue is returned when the value passed in does not satisfy the appropriate interfaces whilst also lacking a container field (configurable or taggable). v must be a non-nil struct
+	ErrInvalidValue = errors.New("value must be a non-nil pointer to a struct or implement the apporpriate interfaces")
 	// ErrInvalidInput is returned when the input is not a non-nil pointer to a type implementing Labeled, which is any type that has a GetLabels method that returns a map[string]string, or a map[string]string
-	ErrInvalidInput = errors.New("input must either be a non-nil pointer to a struct implementing Labeled, which is any type with a GetLabels method that returns a map[string]string or a map[string]string")
+	ErrInvalidInput = errors.New("input must either be a non-nil pointer to a struct implementing Labeled or be a map[string]string")
 	// ErrParsing returned when there are errors parsing the value. See Errors for specific FieldErrors
 	ErrParsing = errors.New("error(s) occurred while parsing")
 	// ErrInvalidContainer is returned when the field marked with * is not map[string]string
 	// This error, along with ErrMultipleContainers, is returned immediately without checking for
 	// other potential parsing errors that may have occurred.
-	ErrInvalidContainer = errors.New("Field marked with * is not a map[string]string. Consider removing the * and implementing Labelee by including SetLabels(map[string]string) instead")
+	ErrInvalidContainer = errors.New("Field marked with * is not a map[string]string. Consider removing the * and implementing Labeler by including SetLabels(map[string]string) instead")
 	//ErrMultipleContainers is returned when there are more than one tag with "*"
 	ErrMultipleContainers = errors.New("There can only be one tag with *")
-	// ErrInvalidValue is returned when the value passed to Unmarshal is not nil or not a pointer to a struct
-	ErrInvalidValue = errors.New("invalid value")
 	// ErrUnexportedField occurs when a field is marked with tag "label" (or Options.Tag) and not exported.
 	ErrUnexportedField = errors.New("field must be exported")
 	// ErrLabelRequired occurs  when a label is marked as required but not available.
@@ -29,7 +27,7 @@ var (
 	ErrUnmarshalingLabels = errors.New("an error originated from UnmarshalLabels")
 	// ErrMalformedTag returned when a tag is empty / malformed
 	ErrMalformedTag = errors.New("the label tag is malformed")
-	// ErrSettingLabels occurs when the v implements Labelee and SetLabels returns false
+	// ErrSettingLabels occurs when the v implements Labeler and SetLabels returns false
 	ErrSettingLabels = errors.New("failed to set labels")
 	// ErrInvalidOption occurs when a required option or options is not assigned
 	ErrInvalidOption = errors.New("invalid option")
@@ -43,68 +41,12 @@ var (
 	//ErrMissingFormat is returned when a field requires formatting (time.Time for now)
 	// but has not been set via the tag or Options (TimeFormat)
 	ErrMissingFormat = errors.New("format is required for this field")
-
-	optRequiredMsg       = "is required"
-	unmarshalingTypes    = []string{"Labelee", "StrictLabelee", "GenericLabelee"}
-	marshalingTypes      = []string{"Labeled", "GenericallyLabeled"}
-	commaR               = regexp.MustCompile(`,(?:[^,]*$)`)
-	unmarshalingTypesStr = commaR.ReplaceAllString(strings.Join(unmarshalingTypes, ", "), "or ")
-	marshalingTypesStr   = commaR.ReplaceAllString(strings.Join(marshalingTypes, ", "), "or ")
 )
-
-// InvalidValueError occurs when the value passed in does not satisfy the appropriate types or
-// contsain a field with the ContainerFlag token. AllowedTypes contains a list of interfaces
-type InvalidValueError struct {
-	AllowedTypes    []string
-	ContainerToken  string
-	Marshaling      bool
-	Tag             string
-	Unmarshaling    bool
-	allowedTypesStr string
-	typeStr         string
-}
-
-func newInvalidValueErrorForMarshaling(o Options) *InvalidValueError {
-
-	err := &InvalidValueError{
-		Tag:             o.Tag,
-		ContainerToken:  o.ContainerToken,
-		Marshaling:      true,
-		Unmarshaling:    false,
-		AllowedTypes:    marshalingTypes,
-		allowedTypesStr: marshalingTypesStr,
-		typeStr:         "Marshaler or MarshalerWithOpts",
-	}
-
-	return err
-}
-func newInvalidValueErrorForUnmarshaling(o Options) *InvalidValueError {
-
-	err := &InvalidValueError{
-		Tag:             o.Tag,
-		ContainerToken:  o.ContainerToken,
-		Marshaling:      false,
-		Unmarshaling:    true,
-		AllowedTypes:    marshalingTypes,
-		allowedTypesStr: marshalingTypesStr,
-		typeStr:         "Unmarshaler or UnmarshalerWithOpts",
-	}
-	return err
-}
-
-func (err *InvalidValueError) Error() string {
-	return fmt.Sprintf("%v: value must be a non-nil pointer to a struct that implements %s; has a field with a tag `%s:\"%s\"`  (configurable via OptContainerToken); or implmeents %s", ErrInvalidInput, err.allowedTypesStr, err.Tag, err.ContainerToken, err.typeStr)
-}
-
-func (err *InvalidValueError) Unwrap() error {
-	return fmt.Errorf("%w: value must be a non-nil pointer to a struct that implements %s; has a field with a tag `%s:\"%s\"`  (configurable via OptContainerToken); or implmeents %s", ErrInvalidInput, err.allowedTypesStr, err.Tag, err.ContainerToken, err.typeStr)
-}
 
 // FieldError is returned when there is an error parsing a field's tag due to
 // it being malformed or inaccessible.
 type FieldError struct {
 	Field string
-	Key   string
 	Tag   Tag
 	Err   error
 }
@@ -118,22 +60,31 @@ func (err *FieldError) Unwrap() error {
 }
 
 // NewFieldError creates a new FieldError
-func NewFieldError(name string, tag Tag, err error) *FieldError {
+func NewFieldError(fieldName string, err error) *FieldError {
 	return &FieldError{
-		Field: name,
-		Tag:   tag,
+		Field: fieldName,
 		Err:   err,
 	}
 
 }
 
+// NewFieldErrorWithTag creates a new FieldError
+func NewFieldErrorWithTag(field string, t Tag, err error) *FieldError {
+	return &FieldError{
+		Field: field,
+		Tag:   t,
+		Err:   err,
+	}
+}
+
 func newFieldError(f *field, err error) *FieldError {
-	return NewFieldError(f.Name, f.Tag, err)
+	return NewFieldErrorWithTag(f.Name, *f.Tag, err)
 }
 
 func newFieldErrorFromNested(parent *field, err *FieldError) *FieldError {
 	name := fmt.Sprintf("%s.%s", parent.Name, err.Field)
-	return NewFieldError(name, err.Tag, err)
+
+	return NewFieldErrorWithTag(name, err.Tag, err)
 
 }
 
@@ -176,10 +127,9 @@ type OptionError struct {
 }
 
 // NewOptionError creates a new OptionError
-func NewOptionError(option, value, msg string) *OptionError {
+func NewOptionError(option, msg string) *OptionError {
 	return &OptionError{
 		Option: option,
-		Value:  value,
 		Msg:    msg,
 	}
 }

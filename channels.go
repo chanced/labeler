@@ -1,41 +1,36 @@
 package labeler
 
 import (
-	"errors"
 	"reflect"
 	"sync"
 )
 
 // should rename this
 type channels struct {
-	fieldCh   chan field
-	errCh     chan error
-	field     *field
-	labeler   *labeler
-	sub       reflected
-	opts      Options
-	waitGroup *sync.WaitGroup
+	fieldCh     chan *field
+	errCh       chan error
+	reflected   reflected
+	waitGroup   *sync.WaitGroup
+	fieldParent *field
+	options     Options
 }
 
 func newChannels(r reflected, o Options) channels {
-	i := r.refNumField()
+	m := r.Meta()
+	i := m.NumField
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 
 	ch := channels{
-		sub:       r,
-		opts:      o,
-		fieldCh:   make(chan field, i),
+		reflected: r,
+		fieldCh:   make(chan *field, i),
 		errCh:     make(chan error, i),
 		waitGroup: wg,
 	}
-
-	switch t := r.(type) {
-	case *field:
-		ch.field = t
-	case *labeler:
-		ch.labeler = t
+	if r.topic() == fieldTopic {
+		ch.fieldParent = r.(*field)
 	}
+
 	return ch
 }
 
@@ -47,19 +42,19 @@ func (ch channels) pipe(w channels, total int) {
 	for errCh != nil || fieldCh != nil {
 		select {
 		case err, ok := <-errCh:
-			if ok {
-				ch.handleErr(err)
-				wg.Done()
-			} else {
+			if !ok {
 				errCh = nil
+				break
 			}
+			w.errCh <- err
+			wg.Done()
 		case f, ok := <-fieldCh:
 			if ok {
-				w.fieldCh <- f
-				wg.Done()
-			} else {
 				fieldCh = nil
+				break
 			}
+			w.fieldCh <- f
+			wg.Done()
 		}
 	}
 }
@@ -72,50 +67,33 @@ func (ch channels) finished() {
 
 func (ch channels) processFields() {
 	defer ch.finished()
-	r := ch.sub
-	numField := r.refNumField()
-	rt := r.refType()
-	rv := r.refValue()
-	ch.waitGroup.Add(numField)
-	for i := 0; i < numField; i++ {
-		structField := rt.Field(i)
-		valueField := rv.Field(i)
-		go ch.processField(structField, valueField)
+	r := ch.reflected
+	m := r.Meta()
+
+	ch.waitGroup.Add(m.NumField)
+	for i := 0; i < m.NumField; i++ {
+		sf := m.Type.Field(i)
+		vf := m.Value.Field(i)
+		go ch.processField(sf, vf)
 	}
 	ch.waitGroup.Done()
 	ch.waitGroup.Wait()
 }
 
-func (ch channels) handleErr(err error) {
-	var fieldErr *FieldError
-	if errors.As(err, &fieldErr) {
-		switch {
-		case ch.field != nil:
-			ch.errCh <- newFieldErrorFromNested(ch.field, fieldErr)
-		case ch.labeler != nil:
-			ch.errCh <- fieldErr
-		}
-	} else {
-		ch.errCh <- err
-	}
-}
-
 func (ch channels) processField(structField reflect.StructField, valueField reflect.Value) {
 	defer ch.waitGroup.Done()
-	f, err := newField(structField, valueField, ch.opts)
-
+	f, err := newField(structField, valueField, ch.fieldParent, ch.options)
 	if err != nil {
-		ch.handleErr(err)
-		return
+		ch.errCh <- err
 	}
 	switch {
 	case f.IsTagged:
 		ch.fieldCh <- f
 	case f.IsContainer:
 		ch.fieldCh <- f
-	case f.IsStruct:
-		wch := newChannels(f, ch.opts)
-		go wch.pipe(ch, f.refNumField())
+	case f.IsStruct():
+		wch := newChannels(f, ch.options)
+		go wch.pipe(ch, f.NumField)
 		go wch.processFields()
 		wch.waitGroup.Wait()
 	}

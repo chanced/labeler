@@ -36,8 +36,8 @@ var myEnumMapToStr map[MyEnum]string = map[MyEnum]string{
 
 func getMyEnumMapFromStr() map[string]MyEnum {
 	m := make(map[string]MyEnum)
-	for key, value := range myEnumMapToStr {
-		m[value] = key
+	for k, v := range myEnumMapToStr {
+		m[v] = k
 	}
 	return m
 }

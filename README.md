@@ -4,6 +4,11 @@
 
 A Go package for marshaling and unmarshaling `map[string]string` with struct tags.
 
+|                                                                                                  |
+| -----------------------------------------------------------------------------------------------: |
+|                          ![myImage](https://media3.giphy.com/media/xT5LMx9pJT5Uvbs6D6/giphy.gif) |
+| <sup>source: [giphy](https://giphy.com/gifs/season-3-the-simpsons-3x13-xT5LMx9pJT5Uvbs6D6)</sup> |
+
 ```bash
 go get github.com/chanced/labeler
 ```
@@ -20,11 +25,6 @@ go get github.com/chanced/labeler
   - [Using multiple tags](#example-using-multiple-tags)
 - [Options](#options)
 - [Notes](#notes)
-
-  |                                                                                                  |
-  | -----------------------------------------------------------------------------------------------: |
-  |                          ![myImage](https://media3.giphy.com/media/xT5LMx9pJT5Uvbs6D6/giphy.gif) |
-  | <sup>source: [giphy](https://giphy.com/gifs/season-3-the-simpsons-3x13-xT5LMx9pJT5Uvbs6D6)</sup> |
 
 ## Value: `interface{}` defined
 

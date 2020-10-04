@@ -411,13 +411,8 @@ func main() {
 This is my first project in Go. I have no doubt that there are places that could use improvement
 and that the project, as a whole, could have been written more efficiently and cleaner overall.
 
-Having said that, I am blown away by how performant Go is. I haven't benchmarked it yet, nor do know of
-any projects to benchmark it against, but I am still thoroughly impressed with how fast the package is given
-that it is using reflection and magical string (struct tags) parsing.
-
-Under the hood, each `struct` and each of its fields are analyzed in and processed, passing the results and/or
-errors through a `chan`. This may not be the most performant means of handling construction of a schema, but as
-I was intent on learning go, it made sense for me to explore those mechanics within the language.
+Under the hood, each `struct` and each of its fields are analyzed and processed in goroutines, passing the results and/or
+errors through a `chan`.
 
 #### Motivation
 

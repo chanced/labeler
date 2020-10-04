@@ -20,6 +20,7 @@ go get github.com/chanced/labeler
   - [Using multiple tags](#example-using-multiple-tags)
 - [Options](#options)
 - [Notes](#notes)
+- [License (MIT)](#license)
 
 ## Value: `interface{}` defined
 

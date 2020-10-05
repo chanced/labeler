@@ -25,17 +25,19 @@ func newField(sf reflect.StructField, rv reflect.Value, parent reflected, o Opti
 	fieldName := sf.Name
 	f := &field{
 		Name:   fieldName,
-		meta:   newMeta(rv),
 		Parent: parent,
 	}
-	f.parseTag(sf, o)
-	f.deref()
+	err := f.parseTag(sf, o)
+	if err != nil {
+		return f, f.err(err)
+	}
 	f.setIsContainer(o)
+	f.meta = newMeta(rv)
 
-	if f.IsTagged && !f.CanAddr {
+	if f.IsTagged && !f.canAddr {
 		return f, f.err(ErrUnexportedField)
 	}
-	if !f.CanAddr {
+	if !f.canAddr {
 		return f, nil
 	}
 	return f, nil
@@ -86,25 +88,6 @@ func (f *field) err(err error) *FieldError {
 		return newFieldError(f, err)
 	}
 	return nil
-}
-
-func (f *field) resolve(labels map[string]string, v interface{}, err error) error {
-	if err != nil {
-		return f.err(err)
-	}
-	if v != nil {
-		f.setValue(v)
-		f.WasSet = true
-	}
-	return nil
-}
-
-func (f *field) setValue(v interface{}) {
-	rv := reflect.ValueOf(v)
-	f.Value.Set(rv)
-	if f.IsPtr {
-		f.Ptr.Set(f.Value.Elem())
-	}
 }
 
 func (f *field) intBase(o Options) int {
@@ -287,6 +270,14 @@ func (f *field) setDuration(s string, o Options) error {
 	return nil
 }
 
+func (f *field) setMap(v map[string]string, o Options) error {
+	if f.Kind != reflect.Map {
+		return f.err(errors.New("Invalid type")) // this shouldn't happen
+	}
+	f.Value.Set(reflect.ValueOf(v))
+	return nil
+}
+
 func (f *field) topic() topic {
 	return fieldTopic
 }
@@ -295,47 +286,3 @@ func (f *field) Save() {
 	f.save()
 	f.Parent.Save()
 }
-
-var labelMapType reflect.Type = reflect.TypeOf(map[string]string{})
-var timeType = reflect.TypeOf(time.Time{})
-var durationType = func() reflect.Type { var d time.Duration; return reflect.TypeOf(d) }()
-
-// switch {
-// case f.UnmarshalerWithOpts != nil:
-// 	err := f.UnmarshalerWithOpts.UnmarshalLabels(l, o)
-// 	if err != nil {
-// 		return f.err(err)
-// 	}
-// 	return nil
-// case f.Unmarshaler != nil:
-// 	err := f.Unmarshaler.UnmarshalLabels(l)
-// 	if err != nil {
-// 		return f.err(err)
-// 	}
-// 	return nil
-// case f.IsContainer:
-// 	return f.resolveContainer(l, o)
-// case !f.IsTagged:
-// 	return nil
-// }
-// var required bool
-// var ignoreCase bool
-// var defaultValue string
-
-// if f.Tag.IgnoreCaseIsSet {
-// 	ignoreCase = f.Tag.IgnoreCase
-// } else {
-// 	ignoreCase = o.IgnoreCase
-// }
-
-// if f.Tag.DefaultIsSet {
-// 	defaultValue = f.Tag.Default
-// } else {
-// 	defaultValue = o.Default
-// }
-
-// if f.Tag.RequiredIsSet {
-// 	required = f.Tag.Required
-// } else {
-// 	required = o.RequireAllFields
-// }

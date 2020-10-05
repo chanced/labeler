@@ -2,15 +2,16 @@ package labeler
 
 import "reflect"
 
-type getter func(r reflected, o Options) (string, bool)
+type igetter func(r reflected, o Options) getter
+type getter func(r reflected, o Options) (keyvalueSet, bool)
 
-type fieldGetter func(f *field, o Options) (string, bool)
+type igetterSet []igetter
+type fieldGetter func(f *field, o Options) (keyvalueSet, bool)
+type fieldStrGetter func(f *field, o Options) (string, bool)
+type pkgFieldStrGetterMap map[string]map[string]fieldStrGetter
 
-type pkgGetters = map[string]typeFieldGetters
-type typeFieldGetters = map[string]fieldGetter
-
-var pkgFieldGetters pkgGetters = pkgGetters{
-	"time": typeFieldGetters{
+var pkgFieldStrGetterLookup = pkgFieldStrGetterMap{
+	"time": {
 		"Time": func(f *field, o Options) (string, bool) {
 			return f.formatTime(o)
 		},
@@ -20,7 +21,7 @@ var pkgFieldGetters pkgGetters = pkgGetters{
 	},
 }
 
-var basicFieldGetters = map[reflect.Kind]fieldGetter{
+var basicFieldGetters = map[reflect.Kind]fieldStrGetter{
 	reflect.Bool: func(f *field, o Options) (string, bool) {
 		return f.formatBool(o)
 	},

@@ -9,9 +9,12 @@ type reflected interface {
 	Save()
 	topic() topic
 	path() string
-	numField() int
-	implements(u reflect.Type) bool
-	assignableTo(u reflect.Type) bool
+	NumField() int
+	Implements(u reflect.Type) bool
+	Assignable(u reflect.Type) bool
+	CanInterface() bool
+	CanAddr() bool
+	CanSet() bool
 }
 
 type topic int
@@ -23,6 +26,7 @@ const (
 	inputTopic
 )
 
+//TODO: rename the values below and create interface accessors where applicable
 type meta struct {
 	Type          reflect.Type
 	Kind          reflect.Kind
@@ -33,11 +37,11 @@ type meta struct {
 	Interface     interface{}
 	TypeName      string
 	PkgPath       string
-	NumField      int
+	numField      int
 	IsPtr         bool
-	CanAddr       bool
-	CanSet        bool
-	CanInterface  bool
+	canAddr       bool
+	canSet        bool
+	canInterface  bool
 	IsStructField bool
 }
 
@@ -52,19 +56,20 @@ func newMeta(rv reflect.Value) meta {
 		Kind:         kind,
 		Type:         t,
 		IsPtr:        kind == reflect.Ptr,
-		CanAddr:      rv.CanAddr(),
-		CanInterface: rv.CanInterface(),
+		canAddr:      rv.CanAddr(),
+		canSet:       rv.CanSet(),
+		canInterface: rv.CanInterface(),
 		TypeName:     tname,
 		PkgPath:      pkgPath,
 	}
 
 	m.IsPtr = m.deref()
-
+	m.deref()
 	if m.Kind == reflect.Struct {
-		m.NumField = m.Type.NumField()
+		m.numField = m.Type.NumField()
 	}
 
-	if m.CanInterface {
+	if m.canInterface {
 		m.Interface = rv.Interface()
 	}
 
@@ -87,7 +92,7 @@ func (m *meta) deref() bool {
 	m.Value = ptr.Elem()
 	m.Type = ptr.Type()
 	m.Kind = ptr.Kind()
-	m.CanAddr = m.Value.CanAddr()
+	m.canAddr = m.Value.CanAddr()
 	return true
 
 }
@@ -106,14 +111,25 @@ func (m meta) Meta() meta {
 	return m
 }
 
-func (m meta) numField() int {
-	return m.NumField
+func (m meta) NumField() int {
+	return m.numField
 }
 
-func (m meta) implements(u reflect.Type) bool {
+func (m meta) Implements(u reflect.Type) bool {
 	return m.Type.Implements(u)
 }
 
-func (m meta) assignableTo(u reflect.Type) bool {
-	return m.Type.AssignableTo(u)
+func (m meta) Assignable(u reflect.Type) bool {
+	return u.AssignableTo(m.Type)
+}
+
+func (m meta) CanSet() bool {
+	return m.canSet
+}
+
+func (m meta) CanInterface() bool {
+	return m.canInterface
+}
+func (m meta) CanAddr() bool {
+	return m.canAddr
 }

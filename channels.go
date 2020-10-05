@@ -15,7 +15,7 @@ type channels struct {
 }
 
 func newChannels(r reflected, o Options) channels {
-	i := r.numField()
+	i := r.NumField()
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 
@@ -64,9 +64,8 @@ func (ch channels) processFields() {
 	defer ch.finished()
 	r := ch.reflected
 	m := r.Meta()
-
-	ch.waitGroup.Add(m.NumField)
-	for i := 0; i < m.NumField; i++ {
+	numField := r.NumField()
+	for i := 0; i < numField; i++ {
 		sf := m.Type.Field(i)
 		vf := m.Value.Field(i)
 		go ch.processField(sf, vf)
@@ -88,7 +87,7 @@ func (ch channels) processField(structField reflect.StructField, valueField refl
 		ch.fieldCh <- f
 	case f.IsStruct():
 		wch := newChannels(f, ch.options)
-		go wch.pipe(ch, f.NumField)
+		go wch.pipe(ch, f.NumField())
 		go wch.processFields()
 		wch.waitGroup.Wait()
 	}

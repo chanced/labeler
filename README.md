@@ -385,22 +385,22 @@ func main() {
 
 | Option               |      Default      | Details                                                                                                                                           | Option `func`                     |
 | :------------------- | :---------------: | :------------------------------------------------------------------------------------------------------------------------------------------------ | :-------------------------------- |
-| `FormatToken`        |    `"format"`     | Token to set the field-level formatting for `time` and `float`.                                                                                   | `OptFormatToken(v string)`        |
-| `ComplexFormatToken` | `"complexformat"` | Token used to set `ComplexFormat`. `FormatToken` can be used on non-container fields instead.                                                     | `OptComplexFormatToken(v string)` |
-| `FloatFormatToken`   |  `"floatformat"`  | Token used to set `FloatFormat`. `FormatToken` can be used on non-container fields instead.                                                       | `OptFloatFormatToken(v string)`   |
-| `TimeFormatToken`    |  `"timeformat"`   | Token used to set `TimeFormat`. `FormatToken` can be used on non-container fields instead.                                                        | `OptTimeFormatToken(v string)`    |
-| `RequiredToken`      |   `"required"`    | Token to mark a field as required. If applied to a container, all fields are required unless `NotRequiredToken` is present.                       | `OptRequiredToken(v string)`      |
-| `NotRequiredToken`   |  `"notrequired"`  | Token to mark a field as not required. Only relevant if `RequireAllFields` has been set to `true`.                                                | `OptRequiredToken(v string)`      |
+| `KeepToken`          |     `"keep"`      | Token used to set `KeepLabels` to `true`                                                                                                          | `OptKeepToken(v string)`          |
+| `DiscardToken`       |    `"discard"`    | Token used to set `KeepLabels` to `false`                                                                                                         | `OptDiscardToken(v string)`       |
 | `DefaultToken`       |    `"default"`    | Token to provide a default value if one is not set.                                                                                               | `OptDefaultToken(v string)`       |
-| `BaseToken`          |     `"base"`      | sets the token for parsing base of `int`, `int64`, `int32`, `int16`, `int8`, `uint`, `uint64`, `uint32`, `uint16`, and `uint8` at the field level | `OptBaseToken(v string)`          |
-| `IntBaseToken`       |    `"intbase"`    | sets the token for parsing base of `int`, `int64`, `int32`, `int16`, `int8`, at the container or field level                                      | `OptIntBaseToken(v string)`       |
-| `UintBaseToken`      |   `"uintbase"`    | sets the token for parsing base of `uint`, `uint64`, `uint32`, `uint16`, `uint8`, at the container or field level                                 | `OptUintBaseToken(v string)`      |
 | `CaseSensitiveToken` | `"casesensitive"` | Token used to set `IgnoreCase` to `false`                                                                                                         | `OptCaseSensitiveToken(v string)` |
 | `IgnoreCaseToken`    |  `"ignorecase"`   | Token used to determine whether or not to ignore case of the field's (or all fields if on container) key                                          | `OptIgnoreCaseToken(v string)`    |
 | `OmitEmptyToken`     |   `"omitempty"`   | Token used to determine whether or not to assign empty / zero-value labels                                                                        | `OptOmitEmptyToken(v string)`     |
 | `IncludeEmptyToken`  | `"includeempty"`  | Token used to determine whether or not to assign empty / zero-value labels                                                                        | `OptIncludeEmptyToken(v string)`  |
-| `KeepToken`          |     `"keep"`      | Token used to set `KeepLabels` to `true`                                                                                                          | `OptKeepToken(v string)`          |
-| `DiscardToken`       |    `"discard"`    | Token used to set `KeepLabels` to `false`                                                                                                         | `OptDiscardToken(v string)`       |
+| `RequiredToken`      |   `"required"`    | Token to mark a field as required. If applied to a container, all fields are required unless `NotRequiredToken` is present.                       | `OptRequiredToken(v string)`      |
+| `NotRequiredToken`   |  `"notrequired"`  | Token to mark a field as not required. Only relevant if `RequireAllFields` has been set to `true`.                                                | `OptRequiredToken(v string)`      |
+| `FormatToken`        |    `"format"`     | Token to set the field-level formatting for `time` and `float`.                                                                                   | `OptFormatToken(v string)`        |
+| `TimeFormatToken`    |  `"timeformat"`   | Token used to set `TimeFormat`. `FormatToken` can be used on non-container fields instead.                                                        | `OptTimeFormatToken(v string)`    |
+| `FloatFormatToken`   |  `"floatformat"`  | Token used to set `FloatFormat`. `FormatToken` can be used on non-container fields instead.                                                       | `OptFloatFormatToken(v string)`   |
+| `ComplexFormatToken` | `"complexformat"` | Token used to set `ComplexFormat`. `FormatToken` can be used on non-container fields instead.                                                     | `OptComplexFormatToken(v string)` |
+| `BaseToken`          |     `"base"`      | sets the token for parsing base of `int`, `int64`, `int32`, `int16`, `int8`, `uint`, `uint64`, `uint32`, `uint16`, and `uint8` at the field level | `OptBaseToken(v string)`          |
+| `IntBaseToken`       |    `"intbase"`    | sets the token for parsing base of `int`, `int64`, `int32`, `int16`, `int8`, at the container or field level                                      | `OptIntBaseToken(v string)`       |
+| `UintBaseToken`      |   `"uintbase"`    | sets the token for parsing base of `uint`, `uint64`, `uint32`, `uint16`, `uint8`, at the container or field level                                 | `OptUintBaseToken(v string)`      |
 
 ## Errors
 

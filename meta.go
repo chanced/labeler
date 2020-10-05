@@ -10,6 +10,8 @@ type reflected interface {
 	topic() topic
 	path() string
 	numField() int
+	implements(u reflect.Type) bool
+	assignableTo(u reflect.Type) bool
 }
 
 type topic int
@@ -28,6 +30,7 @@ type meta struct {
 	Field         reflect.StructField
 	Addr          reflect.Value
 	Ptr           reflect.Value
+	Interface     interface{}
 	TypeName      string
 	PkgPath       string
 	NumField      int
@@ -45,17 +48,29 @@ func newMeta(rv reflect.Value) meta {
 	pkgPath := t.PkgPath()
 
 	m := meta{
-		Value:    rv,
-		Kind:     kind,
-		Type:     t,
-		IsPtr:    kind == reflect.Ptr,
-		CanAddr:  rv.CanAddr(),
-		TypeName: tname,
-		PkgPath:  pkgPath,
+		Value:        rv,
+		Kind:         kind,
+		Type:         t,
+		IsPtr:        kind == reflect.Ptr,
+		CanAddr:      rv.CanAddr(),
+		CanInterface: rv.CanInterface(),
+		TypeName:     tname,
+		PkgPath:      pkgPath,
 	}
+
 	m.IsPtr = m.deref()
+
+	if m.Kind == reflect.Struct {
+		m.NumField = m.Type.NumField()
+	}
+
+	if m.CanInterface {
+		m.Interface = rv.Interface()
+	}
+
 	return m
 }
+
 func (m *meta) deref() bool {
 	if m.Kind != reflect.Ptr {
 		return false
@@ -77,12 +92,6 @@ func (m *meta) deref() bool {
 
 }
 
-func (m *meta) SetStructDetails() {
-	if m.Kind == reflect.Struct {
-		m.NumField = m.Type.NumField()
-	}
-}
-
 func (m *meta) IsStruct() bool {
 	return m.Kind == reflect.Struct
 }
@@ -99,4 +108,12 @@ func (m meta) Meta() meta {
 
 func (m meta) numField() int {
 	return m.NumField
+}
+
+func (m meta) implements(u reflect.Type) bool {
+	return m.Type.Implements(u)
+}
+
+func (m meta) assignableTo(u reflect.Type) bool {
+	return m.Type.AssignableTo(u)
 }

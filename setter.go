@@ -7,9 +7,28 @@ type setter func(kvs keyvalueSet, o Options) error
 type fieldSetter func(f *field, kvs keyvalueSet, o Options) error
 type fieldStrSetter func(f *field, s string, o Options) error
 
-var iFieldSetters []isetter = []isetter{
+var fieldSetters []isetter = []isetter{
+	unmarshalers,
 	pkgFieldStrSetters,
+
 	basicFieldStrSetters,
+}
+
+var unmarshalers isetter = func(r reflected, o Options) setter {
+	return nil
+}
+
+var stringeeFieldSetter isetter = func(r reflected, o Options) setter {
+	m := r.Meta()
+	if !m.CanInterface || !r.implements(stringeeType) {
+		return nil
+	}
+	var fs fieldStrSetter = func(f *field, s string, o Options) error {
+		u := m.Interface.(Stringee)
+		u.FromString(s)
+		return nil
+	}
+	return fs.setter(r, o)
 }
 
 func (fs fieldSetter) setter(r reflected, o Options) setter {

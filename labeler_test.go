@@ -10,14 +10,11 @@ import (
 )
 
 type StructWithLabels struct {
-	Labels map[string]string
+	InLabels map[string]string
 }
 
 func (s StructWithLabels) GetLabels() map[string]string {
-	return s.Labels
-}
-func (s StructWithLabels) SetLabels(l map[string]string) {
-	s.Labels = l
+	return s.InLabels
 }
 
 type MyEnum int
@@ -44,11 +41,11 @@ func getMyEnumMapFromStr() map[string]MyEnum {
 
 var myEnumMapFromStr map[string]MyEnum = getMyEnumMapFromStr()
 
-func (my MyEnum) String() string {
-	return myEnumMapToStr[my]
+func (my *MyEnum) String() string {
+	return myEnumMapToStr[*my]
 }
 
-var ErrExampleInvalidEnum = errors.New("Invalid MyEnum Value")
+var ErrExampleInvalidEnum = errors.New("invalid MyEnum Value")
 
 func (my *MyEnum) FromString(s string) error {
 	if v, ok := myEnumMapFromStr[s]; ok {
@@ -59,27 +56,26 @@ func (my *MyEnum) FromString(s string) error {
 }
 
 type Example struct {
-	Name            string        `label:"name"`
-	Important       string        `label:"imp, required"`
-	Enum            MyEnum        `label:"enum"`
-	Duration        time.Duration `label:"duration"`
-	Time            time.Time     `label:"time, format: 01/02/2006 03:04PM"`
-	Dedupe          string        `label:"dedupe, discard"`
-	CaSe            string        `label:"CaSe, casesensitive"`
-	FloatWithFormat float64       `label:"FloatWithFormat, format:b"`
-	Float64         float64       `label:"float64"`
-	Float32         float32       `label:"float32"`
-	Int             int           `label:"int"`
-	Int64           int64         `label:"int64"`
-	Int32           int32         `label:"int32"`
-	Int16           int16         `label:"int16"`
-	Int8            int8          `label:"int8"`
-	Bool            bool          `label:"bool"`
-	Uint            uint          `label:"uint"`
-	Uint64          uint64        `label:"uint64"`
-	Uint32          uint32        `label:"uint32"`
-	Uint16          uint16        `label:"uint16"`
-	Uint8           uint8         `label:"uint8"`
+	Name     string        `label:"name"`
+	Enum     MyEnum        `label:"enum"`
+	Duration time.Duration `label:"duration"`
+	// Time            time.Time     `label:"time, format: 01/02/2006 03:04PM"`
+	Dedupe string `label:"dedupe, discard"`
+	CaSe   string `label:"CaSe, casesensitive"`
+	// FloatWithFormat float64       `label:"FloatWithFormat, format:b"`
+	Float64 float64 `label:"float64"`
+	Float32 float32 `label:"float32"`
+	Int     int     `label:"int"`
+	Int64   int64   `label:"int64"`
+	Int32   int32   `label:"int32"`
+	Int16   int16   `label:"int16"`
+	Int8    int8    `label:"int8"`
+	Bool    bool    `label:"bool"`
+	Uint    uint    `label:"uint"`
+	Uint64  uint64  `label:"uint64"`
+	Uint32  uint32  `label:"uint32"`
+	Uint16  uint16  `label:"uint16"`
+	Uint8   uint8   `label:"uint8"`
 
 	Labels map[string]string
 }
@@ -90,6 +86,38 @@ func (e *Example) SetLabels(l map[string]string) {
 
 func (e *Example) GetLabels() map[string]string {
 	return e.Labels
+}
+
+type ExampleWithEnum struct {
+	Enum   MyEnum `label:"enum"`
+	Labels map[string]string
+}
+
+func (e *ExampleWithEnum) SetLabels(l map[string]string) {
+	e.Labels = l
+}
+
+func TestEnum(t *testing.T) {
+	labels := map[string]string{
+
+		"enum": "ValueB",
+	}
+
+	input := StructWithLabels{
+		InLabels: labels,
+	}
+
+	v := &ExampleWithEnum{}
+	err := Unmarshal(input, v)
+	var pErr *ParsingError
+	if errors.As(err, &pErr) {
+		for _, e := range pErr.Errors {
+			fmt.Println(e)
+		}
+	}
+	assert.NoError(t, err, "Should not have thrown an error")
+	assert.Equal(t, EnumValB, v.Enum, "Enum should be set to EnumValB")
+
 }
 
 func TestExample(t *testing.T) {
@@ -119,166 +147,46 @@ func TestExample(t *testing.T) {
 	}
 
 	input := StructWithLabels{
-		Labels: labels,
+		InLabels: labels,
 	}
 
-	for i := 0; i < 1000; i++ {
-		v := &Example{}
-		err := Unmarshal(input, v)
-		assert.NoError(t, err, "Should not have thrown an error")
-
-		assert.Equal(t, "Archer", v.Name, "Name should be set to \"Archer\"")
-		assert.Equal(t, EnumValB, v.Enum, "Enum should be set to EnumValB")
-		assert.Equal(t, true, v.Bool, "Bool should be set to true")
-		assert.Equal(t, 123456789, v.Int, "Int should be set to 123456789")
-		assert.Equal(t, int8(1), v.Int8, "Int8 should be set to 1")
-		assert.Equal(t, int16(123), v.Int16, "Int16 should be set to 123")
-		assert.Equal(t, int32(12345), v.Int32, "Int32 should be set to 12345")
-		assert.Equal(t, int64(1234567890), v.Int64, "Int64 should be set to 1234567890")
-		assert.Equal(t, float64(1.1234567890), v.Float64, "Float64 should be ste to 1.1234567890")
-		assert.Equal(t, float32(1.123), v.Float32, "Float32 should be 1.123")
-		assert.Equal(t, time.Second*1, v.Duration, "Duration should be 1 second")
-		assert.Equal(t, uint(1234), v.Uint, "Unit should be set to 1234")
-		assert.Equal(t, uint64(1234567890), v.Uint64, "Uint64 should be set to 1234567890")
-		assert.Equal(t, uint32(1234567), v.Uint32, "Uinit32 should be set to 1234567")
-		assert.Equal(t, uint16(123), v.Uint16, "Unit16 should be set to 123")
-		assert.Equal(t, uint8(1), v.Uint8, "Uint8 should be set to 1")
-
-		assert.Zero(t, v.CaSe)
-		assert.Equal(t, "Demonstrates that discard is removed from the Labels after field value is set", v.Dedupe)
-		assert.NotContains(t, v.GetLabels(), "dedupe")
-		assert.Equal(t, time.Date(int(2020), time.September, int(26), int(22), int(10), int(0), int(0), time.UTC), v.Time)
-		if t.Failed() {
-			t.Log("Failed after ", i, " executions")
-			break
+	v := &Example{}
+	err := Unmarshal(input, v)
+	var pErr *ParsingError
+	if errors.As(err, &pErr) {
+		for _, e := range pErr.Errors {
+			fmt.Println(e)
 		}
 	}
+	assert.NoError(t, err, "Should not have thrown an error")
 
+	assert.Equal(t, "Archer", v.Name, "Name should be set to \"Archer\"")
+	assert.Equal(t, EnumValB, v.Enum, "Enum should be set to EnumValB")
+	assert.Equal(t, true, v.Bool, "Bool should be set to true")
+	assert.Equal(t, 123456789, v.Int, "Int should be set to 123456789")
+	assert.Equal(t, int8(1), v.Int8, "Int8 should be set to 1")
+	assert.Equal(t, int16(123), v.Int16, "Int16 should be set to 123")
+	assert.Equal(t, int32(12345), v.Int32, "Int32 should be set to 12345")
+	assert.Equal(t, int64(1234567890), v.Int64, "Int64 should be set to 1234567890")
+	assert.Equal(t, float64(1.1234567890), v.Float64, "Float64 should be ste to 1.1234567890")
+	assert.Equal(t, float32(1.123), v.Float32, "Float32 should be 1.123")
+	assert.Equal(t, time.Second*1, v.Duration, "Duration should be 1 second")
+	assert.Equal(t, uint(1234), v.Uint, "Unit should be set to 1234")
+	assert.Equal(t, uint64(1234567890), v.Uint64, "Uint64 should be set to 1234567890")
+	assert.Equal(t, uint32(1234567), v.Uint32, "Uinit32 should be set to 1234567")
+	assert.Equal(t, uint16(123), v.Uint16, "Unit16 should be set to 123")
+	assert.Equal(t, uint8(1), v.Uint8, "Uint8 should be set to 1")
+
+	assert.Zero(t, v.CaSe)
+	assert.Equal(t, "Demonstrates that discard is removed from the Labels after field value is set", v.Dedupe)
+	assert.NotContains(t, v.GetLabels(), "dedupe")
+	// assert.Equal(t, time.Date(int(2020), time.September, int(26), int(22), int(10), int(0), int(0), time.UTC), v.Time)
 	// res, err := Marshal(v)
 
 	// for key, value := range labels {
 	// 	assert.Contains(t, res, key)
 	// 	assert.Equal(t, value, res[key])
 	// }
-}
-
-type InvalidDueToMissingLabels struct {
-	Name string `label:"name,required"`
-}
-
-func TestInvalidDueToMissingLabel(t *testing.T) {
-	l := StructWithLabels{
-		Labels: map[string]string{
-			"enum": "Invalid",
-		},
-	}
-	inv := &InvalidDueToMissingLabels{}
-	err := Unmarshal(l, inv)
-	assert.Error(t, err, "Should have thrown an error")
-	assert.Error(t, err)
-	if err != nil {
-		if !errors.Is(err, ErrParsing) {
-			assert.Fail(t, "Error should be ErrInvalidValue")
-		}
-		var parsingError *ParsingError
-		if errors.As(err, &parsingError) {
-			assert.Equal(t, 1, len(parsingError.Errors))
-			fieldErr := parsingError.Errors[0]
-			if !errors.Is(fieldErr, ErrLabelRequired) {
-				assert.Fail(t, "Error should be ErrLabelRequired")
-			} else {
-				assert.Equal(t, "Name", fieldErr.Field)
-			}
-		}
-	}
-	t.Log(err)
-}
-
-type InvalidDueMyEnumErr struct {
-	Enum MyEnum `label:"enum,required"`
-}
-
-func TestInvalidDueToMyEnumReturningError(t *testing.T) {
-	l := StructWithLabels{
-		Labels: map[string]string{
-			"enum": "Invalid",
-		},
-	}
-
-	inv := &InvalidDueMyEnumErr{}
-	err := Unmarshal(l, inv)
-	assert.Error(t, err, "Should have thrown an error")
-	assert.Error(t, err)
-	if !errors.Is(err, ErrParsing) {
-		assert.Fail(t, "Error should be ErrInvalidValue")
-	}
-	var parsingError *ParsingError
-	if errors.As(err, &parsingError) {
-		assert.Equal(t, 1, len(parsingError.Errors))
-		fieldErr := parsingError.Errors[0]
-		fmt.Println(fieldErr)
-		if !errors.Is(fieldErr, ErrExampleInvalidEnum) {
-			assert.Fail(t, "Error should be ErrExampleInvalidEnum")
-		} else {
-			assert.Equal(t, "Enum", fieldErr.Field)
-		}
-	} else {
-		assert.Fail(t, "Error should be a ParsingError")
-	}
-	t.Log(err)
-}
-
-type InvalidDueMultipleRequiredFields struct {
-	Enum MyEnum `label:"enum,required"`
-	Name string `label:"name,required"`
-}
-
-func TestInvalidDueToMultipleRequiredFields(t *testing.T) {
-	l := StructWithLabels{
-		Labels: map[string]string{},
-	}
-
-	inv := &InvalidDueMultipleRequiredFields{}
-	err := Unmarshal(l, inv)
-	assert.Error(t, err, "Should have thrown an error")
-	assert.Error(t, err)
-
-	var parsingError *ParsingError
-	if errors.As(err, &parsingError) {
-		assert.Equal(t, 2, len(parsingError.Errors))
-	} else {
-		assert.Fail(t, "Error should be a ParsingError")
-	}
-
-	t.Log(err)
-}
-
-type WithValidation struct {
-	Name          string            `label:"name"`
-	Enum          MyEnum            `label:"enum,required"`
-	RequiredField string            `label:"required_field,required"`
-	Defaulted     string            `label:"defaulted,default:default value"`
-	Labels        map[string]string `label:"*"`
-}
-
-func TestLabeleeWithValidation(t *testing.T) {
-	l := StructWithLabels{
-		Labels: map[string]string{
-			"name": "my name",
-			"enum": "X",
-		},
-	}
-	v := &WithValidation{}
-	err := Unmarshal(l, v)
-	assert.Error(t, err, "should contain errors")
-	var e *ParsingError
-	if errors.As(err, &e) {
-		assert.Len(t, e.Errors, 2)
-	} else {
-		assert.Fail(t, "error should be a parsing error")
-	}
-	assert.Equal(t, "my name", v.Name)
-	assert.Equal(t, EnumUnknown, v.Enum)
 }
 
 type InvalidDueToNonaddressableContainer struct {
@@ -288,7 +196,7 @@ type InvalidDueToNonaddressableContainer struct {
 
 func TestInvalidValueDueToUnaccessibleContainer(t *testing.T) {
 	l := StructWithLabels{
-		Labels: map[string]string{},
+		InLabels: map[string]string{},
 	}
 
 	v := &InvalidDueToNonaddressableContainer{}
@@ -311,7 +219,7 @@ func (wd *WithDiscard) SetLabels(labels map[string]string) {
 
 func TestLabeleeWithDiscard(t *testing.T) {
 	l := StructWithLabels{
-		Labels: map[string]string{
+		InLabels: map[string]string{
 			"will_not_be_in_labels": "discarded_value",
 			"will_be_in_labels":     "kept_value",
 			"unassigned":            "unassigned will be in labels",
@@ -328,32 +236,32 @@ func TestLabeleeWithDiscard(t *testing.T) {
 	assert.Contains(t, v.Labels, "unassigned")
 }
 
-type NestedWithRequired struct {
+type Nested struct {
 	SubField string `label:"subfield,required"`
 }
 
-type WithNestedRequired struct {
-	Nested      NestedWithRequired
+type WithNested struct {
+	Nested      Nested
 	ParentField string            `label:"parentfield"`
 	Labels      map[string]string `label:"*"`
 }
 
 func TestLabeleeWithNestedStruct(t *testing.T) {
 	l := StructWithLabels{
-		Labels: map[string]string{
+		InLabels: map[string]string{
 			"parentfield": "parent-value",
 			"subfield":    "sub-value",
 		},
 	}
 
-	v := &WithNestedRequired{}
+	v := &WithNested{}
 	err := Unmarshal(l, v)
 	assert.NoError(t, err)
 	assert.Equal(t, "sub-value", v.Nested.SubField)
 }
 
 type WithNestedStructAsPtr struct {
-	Nested *NestedWithRequired
+	Nested *Nested
 }
 
 func (p *WithNestedStructAsPtr) SetLabels(m map[string]string) {
@@ -361,7 +269,7 @@ func (p *WithNestedStructAsPtr) SetLabels(m map[string]string) {
 }
 func TestLabeleeWithNestedStructAsPtr(t *testing.T) {
 	l := StructWithLabels{
-		Labels: map[string]string{
+		InLabels: map[string]string{
 			"parentfield": "parent-value",
 			"subfield":    "sub-value",
 		},
@@ -384,12 +292,103 @@ func TestFieldPanicRecovery(t *testing.T) {
 
 func TestLabeleeInvalidWithNestedStruct(t *testing.T) {
 	l := StructWithLabels{
-		Labels: map[string]string{
+		InLabels: map[string]string{
 			"parentfield": "parent-value",
 		},
 	}
-	v := &WithNestedRequired{}
+	v := &WithNested{}
 	err := Unmarshal(l, v)
 	assert.Error(t, err)
 
 }
+
+// type WithValidation struct {
+// 	Name          string            `label:"name"`
+// 	Enum          MyEnum            `label:"enum,required"`
+// 	RequiredField string            `label:"required_field,required"`
+// 	Defaulted     string            `label:"defaulted,default:default value"`
+// 	Labels        map[string]string `label:"*"`
+// }
+
+// func TestLabeleeWithValidation(t *testing.T) {
+// 	l := StructWithLabels{
+// 		Labels: map[string]string{
+// 			"name": "my name",
+// 			"enum": "X",
+// 		},
+// 	}
+// 	v := &WithValidation{}
+// 	err := Unmarshal(l, v)
+// 	assert.Error(t, err, "should contain errors")
+// 	var e *ParsingError
+// 	if errors.As(err, &e) {
+// 		assert.Len(t, e.Errors, 2)
+// 	} else {
+// 		assert.Fail(t, "error should be a parsing error")
+// 	}
+// 	assert.Equal(t, "my name", v.Name)
+// 	assert.Equal(t, EnumUnknown, v.Enum)
+// }
+
+// type InvalidDueToMissingLabels struct {
+// 	Name string `label:"name,required"`
+// }
+
+// type InvalidDueMyEnumErr struct {
+// 	Enum MyEnum `label:"enum,required"`
+// }
+
+// func TestInvalidDueToMyEnumReturningError(t *testing.T) {
+// 	l := StructWithLabels{
+// 		Labels: map[string]string{
+// 			"enum": "Invalid",
+// 		},
+// 	}
+
+// 	inv := &InvalidDueMyEnumErr{}
+// 	err := Unmarshal(l, inv)
+// 	assert.Error(t, err, "Should have thrown an error")
+// 	assert.Error(t, err)
+// 	if !errors.Is(err, ErrParsing) {
+// 		assert.Fail(t, "Error should be ErrInvalidValue")
+// 	}
+// 	var parsingError *ParsingError
+// 	if errors.As(err, &parsingError) {
+// 		assert.Equal(t, 1, len(parsingError.Errors))
+// 		fieldErr := parsingError.Errors[0]
+// 		fmt.Println(fieldErr)
+// 		if !errors.Is(fieldErr, ErrExampleInvalidEnum) {
+// 			assert.Fail(t, "Error should be ErrExampleInvalidEnum")
+// 		} else {
+// 			assert.Equal(t, "Enum", fieldErr.Field)
+// 		}
+// 	} else {
+// 		assert.Fail(t, "Error should be a ParsingError")
+// 	}
+// 	t.Log(err)
+// }
+
+// type InvalidDueMultipleRequiredFields struct {
+// 	Enum MyEnum `label:"enum,required"`
+// 	Name string `label:"name,required"`
+// }
+
+// func TestInvalidDueToMultipleRequiredFields(t *testing.T) {
+// 	l := StructWithLabels{
+// 		Labels: map[string]string{},
+// 	}
+
+// 	inv := &InvalidDueMultipleRequiredFields{}
+// 	err := Unmarshal(l, inv)
+// 	assert.Error(t, err, "Should have thrown an error")
+// 	assert.Error(t, err)
+
+// 	var parsingError *ParsingError
+// 	if errors.As(err, &parsingError) {
+// 		assert.Equal(t, 2, len(parsingError.Errors))
+// 	} else {
+// 		assert.Fail(t, "Error should be a ParsingError")
+// 	}
+
+// 	t.Log(err)
+// }

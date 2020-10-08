@@ -16,14 +16,11 @@ func getDefaultOptions() Options {
 		OmitEmpty:           true,
 		IgnoreCase:          true,
 		KeepLabels:          true,
-		RequireAllFields:    false,
 		DefaultToken:        "default",
 		FormatToken:         "format",
 		FloatFormatToken:    "floatformat",
 		ComplexFormatToken:  "complexformat",
 		TimeFormatToken:     "timeformat",
-		RequiredToken:       "required",
-		NotRequiredToken:    "notrequired",
 		CaseSensitiveToken:  "casesensitive",
 		OmitEmptyToken:      "omitempty",
 		IncludeEmptyToken:   "includeempty",
@@ -38,6 +35,10 @@ func getDefaultOptions() Options {
 		TimeFormat:          "",
 		ContainerField:      "",
 		CaseSensitiveTokens: true,
+		// RequireAllFields:    false,
+		// RequiredToken:       "required",
+		// NotRequiredToken:    "notrequired",
+
 	}
 
 	return o
@@ -86,15 +87,15 @@ type Options struct {
 	// Example: `label:"*, omitempty"` or `label:"*, includeempty"`
 	OmitEmpty bool
 
-	// 	default: false
-	// RequireAllFields Determines whether or not all fields are required
-	// Individual fields can override this setting at the field level by appending
-	// "required", "notrequired", or a custom configured RequiredToken or NotRequiredToken.
-	//
-	// Example:
-	//	MyField string `label:"myField,required"` // required
-	// 	MyField string `label:"myField,notrequired"` // not required
-	RequireAllFields bool
+	// // 	default: false
+	// // RequireAllFields Determines whether or not all fields are required
+	// // Individual fields can override this setting at the field level by appending
+	// // "required", "notrequired", or a custom configured RequiredToken or NotRequiredToken.
+	// //
+	// // Example:
+	// //	MyField string `label:"myField,required"` // required
+	// // 	MyField string `label:"myField,notrequired"` // not required
+	// RequireAllFields bool
 
 	// 	default: ""
 	// Default sets a global default value for all fields not available in the labels.
@@ -141,13 +142,14 @@ type Options struct {
 	// given field if it is not present in the labels map.
 	DefaultToken string `option:"token"`
 
-	// 	default: "required"
-	// RequiredToken is the token used at the tag level to set the field as being required
-	RequiredToken string `option:"token"`
+	// // 	default: "required"
+	// // RequiredToken is the token used at the tag level to set the field as being required
+	// RequiredToken string `option:"token"`
 
-	// 	default: "notrequired"
-	// NotRequiredToken is the token used at the tag level to set the field as being not required
-	NotRequiredToken string `option:"token"`
+	// // 	default: "notrequired"
+	// // NotRequiredToken is the token used at the tag level to set the field as being not required
+	// NotRequiredToken string `option:"token"`
+
 	// 	default: "keep"
 	// KeepToken is the token used at the tag level to indicate that the field should be carried over
 	// to the labels container (through SetLabels or direct assignment) regardless of global settings
@@ -187,8 +189,8 @@ type Options struct {
 	FormatToken string `option:"token"`
 
 	// 	default: true
-	// CaseSensitiveTokens determines whether or not tokens, such as notrequired, floatformat or uintbase,
-	// can be of any case, such as notRequired, floatFormat, or UintBase respectively.
+	// CaseSensitiveTokens determines whether or not tokens, such as floatformat or uintbase,
+	// can be of any case, such as floatFormat, or UintBase respectively.
 	CaseSensitiveTokens bool
 
 	// 	default: 'f'
@@ -223,15 +225,15 @@ type Options struct {
 	tokenParsers tokenParsers
 }
 
-// SetFromTag sets options from t if t is on a container field (either marked as a container with a tag set
+// FromTag sets options from t if t is on a container field (either marked as a container with a tag set
 // to Options.ContainerFlag) or Options.ContainerField
 // Options that can be updated from the tag are:
 // FloatFormat, TimeFormat (via TimeFormatToken), KeepLabels (via Options.KeepToken / Options.DiscardToken),
-// RequireAllFields (via Options.RequiredToken), IgnoreCase (via Options.IgnoreCaseToken)
+// IgnoreCase (via Options.IgnoreCaseToken)
 // returns: true if successful, false otherwise
-func (o *Options) SetFromTag(t *Tag) {
+func (o Options) FromTag(t *Tag) Options {
 	if t == nil {
-		return
+		return o
 	}
 	if t.ComplexFormat != 0 {
 		o.ComplexFormat = t.ComplexFormat
@@ -254,10 +256,10 @@ func (o *Options) SetFromTag(t *Tag) {
 	if t.IgnoreCaseIsSet {
 		o.IgnoreCase = t.IgnoreCase
 	}
-	if t.RequiredIsSet {
-		o.RequireAllFields = t.Required
-	}
-
+	// if t.RequiredIsSet {
+	// 	o.RequireAllFields = t.Required
+	// }
+	return o
 }
 
 // Option is a function which accepts *Options, allowing for configuration
@@ -293,12 +295,12 @@ func OptDiscardLabels() Option {
 	}
 }
 
-// OptRequireAllFields sets Options.Required to true, thus causing all fields with a tag to be required.
-func OptRequireAllFields() Option {
-	return func(o *Options) {
-		o.RequireAllFields = true
-	}
-}
+// // OptRequireAllFields sets Options.Required to true, thus causing all fields with a tag to be required.
+// func OptRequireAllFields() Option {
+// 	return func(o *Options) {
+// 		o.RequireAllFields = true
+// 	}
+// }
 
 // OptSeperator sets the Seperator option to s. This allows for tags to have a different seperator string other than ","
 // such as MyField string `label:"mykey|default:has,commas"`
@@ -367,19 +369,19 @@ func OptFormatToken(v string) Option {
 	}
 }
 
-// OptRequiredToken sets RequiredToken to v
-func OptRequiredToken(v string) Option {
-	return func(o *Options) {
-		o.RequiredToken = v
-	}
-}
+// // OptRequiredToken sets RequiredToken to v
+// func OptRequiredToken(v string) Option {
+// 	return func(o *Options) {
+// 		o.RequiredToken = v
+// 	}
+// }
 
-// OptNotRequiredToken sets NotRequiredToken to v
-func OptNotRequiredToken(v string) Option {
-	return func(o *Options) {
-		o.NotRequiredToken = v
-	}
-}
+// // OptNotRequiredToken sets NotRequiredToken to v
+// func OptNotRequiredToken(v string) Option {
+// 	return func(o *Options) {
+// 		o.NotRequiredToken = v
+// 	}
+// }
 
 // OptIgnoreCaseToken sets the IgnoreCaseToken to v
 func OptIgnoreCaseToken(v string) Option {

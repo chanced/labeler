@@ -62,12 +62,6 @@ type MarshalerWithOpts interface {
 	MarshalLabels(o Options) (map[string]string, error)
 }
 
-// MarshalerWithTagAndOptions is implemented by types with the method MarsahlLabels,
-// thus being abel to marshal itself into map[string]string
-type MarshalerWithTagAndOptions interface {
-	MarshalLabels(t Tag, o Options) (map[string]string, error)
-}
-
 // Stringee is implemented by any value that has a FromString method,
 // which parses the “native” format for that value from a string and
 // returns a bool value to indicate success (true) or failure (false)
@@ -99,8 +93,7 @@ var genericallyLabeledType = reflect.TypeOf(new(GenericallyLabeled)).Elem()
 var unmarshalerType = reflect.TypeOf(new(Unmarshaler)).Elem()
 var unmarshalerWithOptsType = reflect.TypeOf(new(UnmarshalerWithOpts)).Elem()
 var marshalerType = reflect.TypeOf(new(Marshaler)).Elem()
-var marshalerWithOptisType = reflect.TypeOf(new(MarshalerWithOpts)).Elem()
-var marshalerWithTagAndOptionsType = reflect.TypeOf(new(MarshalerWithTagAndOptions)).Elem()
+var marshalerWithOptsType = reflect.TypeOf(new(MarshalerWithOpts)).Elem()
 var stringeeType = reflect.TypeOf(new(Stringee)).Elem()
 var textUnmarshalerType = reflect.TypeOf(new(TextUnmarshaler)).Elem()
 var textMarshalerType = reflect.TypeOf((new(TextMarshaler))).Elem()

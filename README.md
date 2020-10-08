@@ -44,8 +44,8 @@ labeler is fairly flexible when it comes to what all you can tag. It supports th
 
 | Interface / Type              | Signature                                                                                                                                                   |     Usage |
 | :---------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------- | --------: |
-| `labeler.MarshalerWithOpts`   | `MarshalLabels(o labeler.Options) (map[string]string, error)`                                                                                               |   Marshal |
-| `labeler.Marshaler`           | `MarshalLabels() (map[string]string, error)`                                                                                                                |   Marshal |
+| `labeler.MarshalerWithOpts`   | `MarshalLabels(o labeler.Options) map[string]string`                                                                                                        |   Marshal |
+| `labeler.Marshaler`           | `MarshalLabels() map[string]string`                                                                                                                         |   Marshal |
 | `fmt.Stringer`                | `String() string`                                                                                                                                           |   Marshal |
 | `encoding.TextMarshaler`      | `MarshalText() (text []byte, err error)`                                                                                                                    |   Marshal |
 | `labeler.UnmarshalerWithOpts` | `UnmarshalLabels(v map[string]string, opts Options) error`                                                                                                  | Unmarshal |

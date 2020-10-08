@@ -1,5 +1,7 @@
 package labeler
 
+import "errors"
+
 type fieldset struct {
 	tagged    []*field
 	container *field
@@ -14,7 +16,7 @@ func newFieldset() fieldset {
 
 func (fs *fieldset) setContainer(f *field, o Options) error {
 	if fs.container != nil {
-		if fs.container.Path != f.Path {
+		if fs.container.Path() != f.Path() {
 			return ErrMultipleContainers
 		}
 		return nil
@@ -25,12 +27,14 @@ func (fs *fieldset) setContainer(f *field, o Options) error {
 
 func (fs *fieldset) processField(f *field, o Options) error {
 	if f == nil {
-		return nil
+		return errors.New("field was nil")
 	}
 	if f.IsContainer {
 		return fs.setContainer(f, o)
 	}
-	fs.tagged = append(fs.tagged, f)
+	if f.IsTagged {
+		fs.tagged = append(fs.tagged, f)
+	}
 	return nil
 }
 

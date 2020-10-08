@@ -4,6 +4,5 @@ package labeler
 // available options for input and v.
 func Unmarshal(input interface{}, v interface{}, opts ...Option) error {
 	lbl := NewLabeler(opts...)
-
 	return lbl.Unmarshal(input, v)
 }

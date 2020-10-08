@@ -13,7 +13,7 @@ type field struct {
 	Tag         *Tag
 	Parent      reflected
 	Name        string
-	Path        string
+	path        string
 	Key         string
 	WasSet      bool
 	Keep        bool
@@ -21,26 +21,73 @@ type field struct {
 	IsContainer bool
 }
 
-func newField(sf reflect.StructField, rv reflect.Value, parent reflected, o Options) (*field, error) {
+func newField(parent reflected, i int, o Options) (*field, error) {
+	sf, ok := parent.StructField(i)
+	if !ok {
+		panic(errors.New("can not access field"))
+	}
+	rv, ok := parent.ValueField(i)
+	if !ok {
+		panic(errors.New("can not access field"))
+	}
+
 	fieldName := sf.Name
 	f := &field{
 		Name:   fieldName,
 		Parent: parent,
 	}
-	err := f.parseTag(sf, o)
+	tag, err := f.parseTag(sf, o)
 	if err != nil {
 		return f, f.err(err)
 	}
+
+	f.Tag = tag
+	if tag != nil {
+		f.Key = tag.Key
+	}
+
 	f.setIsContainer(o)
+
 	f.meta = newMeta(rv)
+
+	if err != nil {
+		return f, f.err(err)
+	}
+	if !f.canAddr && f.IsTagged {
+		return f, f.err(ErrUnexportedField)
+	}
 
 	if f.IsTagged && !f.canAddr {
 		return f, f.err(ErrUnexportedField)
 	}
-	if !f.canAddr {
-		return f, nil
+
+	if f.IsTagged || f.IsContainer {
+		f.unmarshal = getUnmarshal(f, o)
+		f.marshal = getMarshal(f, o)
+		if f.unmarshal == nil {
+			return f, f.err(ErrUnsupportedType)
+		}
+		if f.marshal == nil {
+			return f, f.err(ErrUnsupportedType)
+		}
 	}
+
 	return f, nil
+}
+
+func (f *field) Unmarshal(kvs *keyvalues, o Options) error {
+	if f.unmarshal == nil {
+		// this shouldn't happen. just being safe.
+		return f.err(ErrUnsupportedType)
+	}
+	return f.unmarshal(f, kvs, o)
+}
+func (f *field) Marshal(kvs *keyvalues, o Options) error {
+	if f.marshal == nil {
+		// this shouldn't happen. just being safe.
+		return f.err(ErrUnsupportedType)
+	}
+	return f.marshal(f, kvs, o)
 }
 
 func (f *field) ignoreCase(o Options) bool {
@@ -50,37 +97,33 @@ func (f *field) ignoreCase(o Options) bool {
 	return o.IgnoreCase
 }
 
-func (f *field) parseTag(sf reflect.StructField, o Options) error {
+func (f *field) parseTag(sf reflect.StructField, o Options) (*Tag, error) {
 	tagstr, isTagged := sf.Tag.Lookup(o.Tag)
-
+	f.IsTagged = isTagged
 	if !isTagged {
-		f.IsTagged = false
-		return nil
+		return nil, nil
 	}
-	t, err := newTag(tagstr, o)
-	f.Tag = t
-	if err != nil {
-		return err
-	}
-	return nil
+	return newTag(tagstr, o)
 }
 
 func (f *field) setIsContainer(o Options) {
 	switch {
-	case o.ContainerToken == f.Tag.Key:
+	case f.Tag != nil && f.Tag.Key == o.ContainerToken:
 		f.IsContainer = true
-	case o.ContainerField != "" && o.ContainerField == f.Path:
+	case o.ContainerField != "" && o.ContainerField == f.path:
 		f.IsContainer = true
 	}
 	f.IsContainer = false
 }
 
-func (f *field) setPath() {
-	f.Path = fmt.Sprintf("%s.%s", f.Parent.path(), f.Name)
-}
-
-func (f *field) path() string {
-	return f.Path
+func (f *field) Path() string {
+	if f.path != "" {
+		return f.path
+	}
+	if f.Parent.Path() != "" {
+		return fmt.Sprintf("%s.%s", f.Parent.Path(), f.Name)
+	}
+	return f.Name
 }
 
 func (f *field) err(err error) *FieldError {
@@ -124,13 +167,13 @@ func (f *field) timeFormat(o Options) string {
 	return o.TimeFormat
 }
 
-func (f *field) formatInt(o Options) (string, bool) {
-	switch f.Kind {
+func (f *field) formatInt(o Options) (string, error) {
+	switch f.kind {
 	case reflect.Int, reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8:
-		v := f.Value.Int()
-		return strconv.FormatInt(v, f.intBase(o)), true
+		v := f.value.Int()
+		return strconv.FormatInt(v, f.intBase(o)), nil
 	default:
-		return "", false
+		return "", nil
 	}
 }
 
@@ -139,26 +182,26 @@ func (f *field) setInt(s string, bits int, o Options) error {
 	if err != nil {
 		return f.err(err)
 	}
-	f.Value.SetInt(v)
+	f.value.SetInt(v)
 	return nil
 }
 
-func (f *field) formatString(o Options) (string, bool) {
-	return f.Value.String(), true
+func (f *field) formatString(o Options) (string, error) {
+	return f.value.String(), nil
 }
 
 func (f *field) setString(s string, o Options) error {
-	f.Value.SetString(s)
+	f.value.SetString(s)
 	return nil
 }
 
-func (f *field) formatUint(o Options) (string, bool) {
-	switch f.Kind {
+func (f *field) formatUint(o Options) (string, error) {
+	switch f.kind {
 	case reflect.Uint, reflect.Uint64, reflect.Uint32, reflect.Uint16, reflect.Uint8:
-		v := f.Value.Uint()
-		return strconv.FormatUint(v, f.intBase(o)), true
+		v := f.value.Uint()
+		return strconv.FormatUint(v, f.intBase(o)), nil
 	default:
-		return "", false
+		return "", nil
 	}
 }
 
@@ -167,20 +210,20 @@ func (f *field) setUint(s string, bits int, o Options) error {
 	if err != nil {
 		return f.err(err)
 	}
-	f.Value.SetUint(v)
+	f.value.SetUint(v)
 	return nil
 }
 
-func (f *field) formatComplex(o Options) (string, bool) {
-	switch f.Kind {
+func (f *field) formatComplex(o Options) (string, error) {
+	switch f.kind {
 	case reflect.Complex128:
-		v := f.Value.Complex()
-		return strconv.FormatComplex(v, f.complexFormat(o), -1, 128), true
+		v := f.value.Complex()
+		return strconv.FormatComplex(v, f.complexFormat(o), -1, 128), nil
 	case reflect.Complex64:
-		v := f.Value.Complex()
-		return strconv.FormatComplex(v, f.complexFormat(o), -1, 64), true
+		v := f.value.Complex()
+		return strconv.FormatComplex(v, f.complexFormat(o), -1, 64), nil
 	default:
-		return "", false
+		return "", nil
 	}
 }
 
@@ -189,20 +232,20 @@ func (f *field) setComplex(s string, bits int, o Options) error {
 	if err != nil {
 		return f.err(err)
 	}
-	f.Value.SetComplex(v)
+	f.value.SetComplex(v)
 	return nil
 }
 
-func (f *field) formatFloat(o Options) (string, bool) {
-	switch f.Kind {
+func (f *field) formatFloat(o Options) (string, error) {
+	switch f.kind {
 	case reflect.Float64:
-		v := f.Value.Float()
-		return strconv.FormatFloat(v, f.floatFormat(o), -1, 64), true
+		v := f.value.Float()
+		return strconv.FormatFloat(v, f.floatFormat(o), -1, 64), nil
 	case reflect.Float32:
-		v := f.Value.Float()
-		return strconv.FormatFloat(v, f.floatFormat(o), -1, 32), true
+		v := f.value.Float()
+		return strconv.FormatFloat(v, f.floatFormat(o), -1, 32), nil
 	default:
-		return "", false
+		return "", nil
 	}
 }
 
@@ -211,16 +254,16 @@ func (f *field) setFloat(s string, bits int, o Options) error {
 	if err != nil {
 		return f.err(err)
 	}
-	f.Value.SetFloat(v)
+	f.value.SetFloat(v)
 	return nil
 }
 
-func (f *field) formatBool(o Options) (string, bool) {
-	if f.Kind == reflect.Bool {
-		v := f.Value.Bool()
-		return strconv.FormatBool(v), true
+func (f *field) formatBool(o Options) (string, error) {
+	if f.kind == reflect.Bool {
+		v := f.value.Bool()
+		return strconv.FormatBool(v), nil
 	}
-	return "", false
+	return "", nil
 }
 
 func (f *field) setBool(s string, o Options) error {
@@ -228,19 +271,19 @@ func (f *field) setBool(s string, o Options) error {
 	if err != nil {
 		return f.err(err)
 	}
-	f.Value.SetBool(v)
+	f.value.SetBool(v)
 	return nil
 }
 
-func (f *field) formatTime(o Options) (string, bool) {
-	if v, ok := f.Value.Interface().(time.Time); ok {
-		return v.Format(f.timeFormat(o)), true
+func (f *field) formatTime(o Options) (string, error) {
+	if v, ok := f.value.Interface().(time.Time); ok {
+		return v.Format(f.timeFormat(o)), nil
 	}
-	return "", false
+	return "", nil
 }
 
 func (f *field) setTime(s string, o Options) error {
-	if !timeType.AssignableTo(f.Type) {
+	if !timeType.AssignableTo(f.Type()) {
 		return f.err(errors.New("Can not assign time.Time to " + f.Name))
 	}
 	v, err := time.Parse(f.timeFormat(o), s)
@@ -248,15 +291,15 @@ func (f *field) setTime(s string, o Options) error {
 		return f.err(err)
 	}
 	rv := reflect.ValueOf(v)
-	f.Value.Set(rv)
+	f.value.Set(rv)
 	return nil
 }
 
-func (f *field) formatDuration(o Options) (string, bool) {
-	if v, ok := f.Value.Interface().(time.Duration); ok {
-		return v.String(), true
+func (f *field) formatDuration(o Options) (string, error) {
+	if v, ok := f.value.Interface().(time.Duration); ok {
+		return v.String(), nil
 	}
-	return "", false
+	return "", nil
 
 }
 
@@ -266,23 +309,34 @@ func (f *field) setDuration(s string, o Options) error {
 		return f.err(err)
 	}
 	rv := reflect.ValueOf(v)
-	f.Value.Set(rv)
+	f.value.Set(rv)
 	return nil
 }
 
 func (f *field) setMap(v map[string]string, o Options) error {
-	if f.Kind != reflect.Map {
-		return f.err(errors.New("Invalid type")) // this shouldn't happen
+	if f.kind != reflect.Map {
+		return f.err(errors.New("invalid type")) // this shouldn't happen
 	}
-	f.Value.Set(reflect.ValueOf(v))
+	f.value.Set(reflect.ValueOf(v))
 	return nil
 }
 
-func (f *field) topic() topic {
-	return fieldTopic
+func (f *field) Default(o Options) string {
+	if f.Tag.DefaultIsSet {
+		return f.Tag.Default
+	}
+	return o.Default
 }
 
 func (f *field) Save() {
 	f.save()
 	f.Parent.Save()
+}
+
+func (f *field) Topic() topic {
+	return fieldTopic
+}
+
+func (f *field) IsFieldContainer() bool {
+	return f.IsContainer
 }

@@ -8,29 +8,21 @@ import (
 type subject struct {
 	meta
 	fieldset
-	options Options
 }
 
-func newSubject(v interface{}, o Options) subject {
+func newSubject(v interface{}, o Options) (subject, error) {
 	rv := reflect.ValueOf(v)
 	sub := subject{
 		meta:     newMeta(rv),
 		fieldset: newFieldset(),
 	}
-
-	return sub
-}
-
-func (sub *subject) topic() topic {
-	return subjectTopic
-}
-
-func (sub *subject) Save() {
-	sub.save()
+	sub.marshal = getMarshal(&sub, o)
+	sub.unmarshal = getUnmarshal(&sub, o)
+	err := sub.init(o)
+	return sub, err
 }
 
 func (sub *subject) init(o Options) error {
-
 	ch := newChannels(sub, o)
 	go ch.processFields()
 	errs := []*FieldError{}
@@ -47,7 +39,6 @@ func (sub *subject) init(o Options) error {
 			if err != nil {
 				return err
 			}
-
 		case err, ok := <-errCh:
 			if !ok {
 				errCh = nil
@@ -64,12 +55,44 @@ func (sub *subject) init(o Options) error {
 	if len(errs) > 0 {
 		return NewParsingError(errs)
 	}
-	o.SetFromTag(sub.containerTag())
-
-	sub.options = o
+	o = o.FromTag(sub.containerTag())
 	return nil
 }
 
-func (sub *subject) path() string {
+func (sub *subject) Save() {
+	sub.save()
+}
+
+func (sub *subject) Unmarshal(kvs *keyvalues, o Options) error {
+	var unmarshalLabels unmarshal
+	if sub.unmarshal != nil {
+		unmarshalLabels = sub.unmarshal
+	} else if sub.container != nil {
+		unmarshalLabels = sub.container.unmarshal
+	} else {
+		return ErrMissingContainer
+	}
+	for _, f := range sub.tagged {
+		err := f.Unmarshal(kvs, o)
+		if err != nil {
+			return err
+		}
+	}
+	return unmarshalLabels(sub, kvs, o)
+}
+
+func (sub *subject) Marshal(kvs *keyvalues, o Options) error {
+	return nil
+}
+
+func (sub *subject) Path() string {
 	return ""
+}
+
+func (sub *subject) Topic() topic {
+	return subjectTopic
+}
+
+func (sub *subject) IsFieldContainer() bool {
+	return false
 }

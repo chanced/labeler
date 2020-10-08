@@ -7,40 +7,51 @@ import (
 )
 
 var (
+
+	// Primary errors
+
 	// ErrInvalidValue is returned when the value passed in does not satisfy the appropriate interfaces whilst also lacking a container field (configurable or taggable). v must be a non-nil struct
-	ErrInvalidValue = errors.New("value must be a non-nil pointer to a struct or implement the apporpriate interfaces")
+	ErrInvalidValue = errors.New("value must be apointer to a struct or implement the apporpriate interfaces")
+
 	// ErrInvalidInput is returned when the input is not a non-nil pointer to a type implementing Labeled, which is any type that has a GetLabels method that returns a map[string]string, or a map[string]string
-	ErrInvalidInput = errors.New("input must either be a non-nil pointer to a struct implementing Labeled or be a map[string]string")
+	ErrInvalidInput = errors.New("input must either be a non-nil pointer to a struct implementing Labeled or accessible as a map[string]string")
+
 	// ErrParsing returned when there are errors parsing the value. See Errors for specific FieldErrors
 	ErrParsing = errors.New("error(s) occurred while parsing")
-	// ErrInvalidContainer is returned when the field marked with * is not map[string]string
-	// This error, along with ErrMultipleContainers, is returned immediately without checking for
-	// other potential parsing errors that may have occurred.
-	ErrInvalidContainer = errors.New("Field marked with * is not a map[string]string. Consider removing the * and implementing Labeler by including SetLabels(map[string]string) instead")
-	//ErrMultipleContainers is returned when there are more than one tag with "*"
-	ErrMultipleContainers = errors.New("There can only be one tag with *")
-	// ErrUnexportedField occurs when a field is marked with tag "label" (or Options.Tag) and not exported.
-	ErrUnexportedField = errors.New("field must be exported")
-	// ErrLabelRequired occurs  when a label is marked as required but not available.
-	ErrLabelRequired = errors.New("value for this field is required")
-	// ErrUnmarshalingLabels returned from an Unmarshaler.UnmarshalLabel call
-	ErrUnmarshalingLabels = errors.New("an error originated from UnmarshalLabels")
-	// ErrMalformedTag returned when a tag is empty / malformed
-	ErrMalformedTag = errors.New("the label tag is malformed")
-	// ErrSettingLabels occurs when the v implements Labeler and SetLabels returns false
-	ErrSettingLabels = errors.New("failed to set labels")
+
 	// ErrInvalidOption occurs when a required option or options is not assigned
 	ErrInvalidOption = errors.New("invalid option")
+
+	// ErrMultipleContainers is returned when there are more than one tag with "*"
+	ErrMultipleContainers = errors.New("only one container field is allowed per tag")
+
+	// ErrMissingContainer is returned when v does not have a SetLabels method and a container field has not been specified
+	ErrMissingContainer = errors.New("v must have a SetLabels method or a container field for labels must be specified")
+
+	// Field errors
+
+	// ErrUnexportedField occurs when a field is marked with tag "label" (or Options.Tag) and not exported.
+	ErrUnexportedField = errors.New("field must be exported")
+
+	// ErrMalformedTag returned when a tag is empty / malformed
+	ErrMalformedTag = errors.New("the label tag is malformed")
+
 	// ErrInvalidFloatFormat occurs when either Options.FloatFormat or the format token is set to something other than 'b', 'e', 'E', 'f', 'g', 'G', 'x', or 'X'
 	ErrInvalidFloatFormat = errors.New("invalid float format, options are: 'b', 'e', 'E', 'f', 'g', 'G', 'x', and 'X'")
-	// ErrUnsupportedType  is returned when a tag exists on a type that does not implement
+
+	// ErrUnsupportedType is returned when a tag exists on a type that does not implement
 	// Stringer/Stringee, UnmarsalText/MarshalText, or is not one of the following types:
-	// string, bool, int, or float
-	ErrUnsupportedType = errors.New("unsupported field type")
+	// string, bool, int, int64, int32, int16, int8, uint, uint64, uint32, uint16, uint8.
+	// float64, float32, complex128, complex64
+	ErrUnsupportedType = errors.New("unsupported type")
 
 	//ErrMissingFormat is returned when a field requires formatting (time.Time for now)
 	// but has not been set via the tag or Options (TimeFormat)
 	ErrMissingFormat = errors.New("format is required for this field")
+
+	// // ErrLabelRequired occurs  when a label is marked as required but not available.
+	// ErrLabelRequired = errors.New("value for this field is required")
+
 )
 
 // FieldError is returned when there is an error parsing a field's tag due to
@@ -69,23 +80,22 @@ func NewFieldError(fieldName string, err error) *FieldError {
 }
 
 // NewFieldErrorWithTag creates a new FieldError
-func NewFieldErrorWithTag(field string, t Tag, err error) *FieldError {
-	return &FieldError{
+func NewFieldErrorWithTag(field string, t *Tag, err error) *FieldError {
+	fe := &FieldError{
 		Field: field,
-		Tag:   t,
 		Err:   err,
 	}
+	if t != nil {
+		fe.Tag = *t
+	}
+	return fe
 }
 
 func newFieldError(f *field, err error) *FieldError {
-	return NewFieldErrorWithTag(f.Name, *f.Tag, err)
-}
-
-func newFieldErrorFromNested(parent *field, err *FieldError) *FieldError {
-	name := fmt.Sprintf("%s.%s", parent.Name, err.Field)
-
-	return NewFieldErrorWithTag(name, err.Tag, err)
-
+	name := f.Name
+	fmt.Println(name)
+	fmt.Println(f.Tag)
+	return NewFieldErrorWithTag(f.Name, f.Tag, err)
 }
 
 // ParsingError is returned when there are 1 or more errors parsing a value. Check Errors for individual FieldErrors.

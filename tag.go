@@ -268,8 +268,6 @@ func getTokenParsers(o Options) tokenParsers {
 	return tokenParsers{
 		o.IgnoreCaseToken:    parseIgnoreCase,
 		o.CaseSensitiveToken: parseCaseSensitive,
-		o.RequiredToken:      parseRequired,
-		o.NotRequiredToken:   parseNotRquired,
 		o.DiscardToken:       parseKeep,
 		o.TimeFormatToken:    parseTimeFormat,
 		o.ComplexFormatToken: parseComplexFormat,
@@ -278,6 +276,9 @@ func getTokenParsers(o Options) tokenParsers {
 		o.IntBaseToken:       parseIntBase,
 		o.UintBaseToken:      parseUintBase,
 		o.BaseToken:          parseBase,
+
+		// o.RequiredToken:      parseRequired,
+		// o.NotRequiredToken:   parseNotRquired,
 	}
 }
 

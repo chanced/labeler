@@ -7,6 +7,6 @@ package labeler
 // values as they are just present to ensure that all labels are stored, regardless
 // of unmarshaling.
 func Marshal(v interface{}, opts ...Option) (l map[string]string, err error) {
-	return nil, nil
-
+	lbl := NewLabeler(opts...)
+	return lbl.Marshal(v)
 }

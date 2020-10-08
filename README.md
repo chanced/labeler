@@ -28,7 +28,6 @@ go get github.com/chanced/labeler
 - [Notes](#notes)
   - [Comments](#comments)
   - [Prior Art](#prior-art)
-  - [Feedback](#feedback)
 - [License (MIT)](#license)
 
 ## Value: `interface{}` defined
@@ -425,11 +424,6 @@ circumstances as well though.
 ### Prior Art
 
 - [go-env](https://github.com/Netflix/go-env) by Netflix. This is the only package that I looked at that does something similar. It was a huge help in getting started.
-
-### Feedback
-
-I'd love your feedback. Feel free to shoot me an email (chanceusc@gmail.com) or submit a ticket.
-Either way, I'd greatly appreciate it.
 
 If you run into any issues or have any questions, please do submit a ticket.
 

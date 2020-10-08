@@ -108,6 +108,7 @@ func TestEnum(t *testing.T) {
 	}
 
 	v := &ExampleWithEnum{}
+
 	err := Unmarshal(input, v)
 	var pErr *ParsingError
 	if errors.As(err, &pErr) {

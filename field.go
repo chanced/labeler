@@ -276,7 +276,7 @@ func (f *field) setBool(s string, o Options) error {
 }
 
 func (f *field) formatTime(o Options) (string, error) {
-	if v, ok := f.value.Interface().(time.Time); ok {
+	if v, ok := f.Interface().(time.Time); ok {
 		return v.Format(f.timeFormat(o)), nil
 	}
 	return "", nil
@@ -296,7 +296,7 @@ func (f *field) setTime(s string, o Options) error {
 }
 
 func (f *field) formatDuration(o Options) (string, error) {
-	if v, ok := f.value.Interface().(time.Duration); ok {
+	if v, ok := f.Interface().(time.Duration); ok {
 		return v.String(), nil
 	}
 	return "", nil

@@ -50,7 +50,6 @@ type meta struct {
 	addrType     reflect.Type
 	ptrValue     reflect.Value
 	ptrType      reflect.Type
-	iface        interface{}
 	typeName     string
 	pkgPath      string
 	numField     int
@@ -95,15 +94,13 @@ func newMeta(rv reflect.Value) meta {
 }
 
 func (m *meta) Interface() interface{} {
-	if m.iface != nil {
-		return m.iface
-	}
 	if m.isPtr {
-		m.iface = m.ptrValue.Interface()
-		return m.iface
+		return m.ptrValue.Interface()
 	}
-	m.iface = m.value.Interface()
-	return m.iface
+	if m.value.CanAddr() && !m.addr.IsZero() {
+		return m.addr.Interface()
+	}
+	return m.value.Interface()
 }
 
 func (m *meta) Type() reflect.Type {

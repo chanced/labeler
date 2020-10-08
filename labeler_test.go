@@ -10,11 +10,11 @@ import (
 )
 
 type StructWithLabels struct {
-	InLabels map[string]string
+	Labels map[string]string
 }
 
 func (s StructWithLabels) GetLabels() map[string]string {
-	return s.InLabels
+	return s.Labels
 }
 
 type MyEnum int
@@ -99,12 +99,11 @@ func (e *ExampleWithEnum) SetLabels(l map[string]string) {
 
 func TestEnum(t *testing.T) {
 	labels := map[string]string{
-
 		"enum": "ValueB",
 	}
 
 	input := StructWithLabels{
-		InLabels: labels,
+		Labels: labels,
 	}
 
 	v := &ExampleWithEnum{}
@@ -148,7 +147,7 @@ func TestExample(t *testing.T) {
 	}
 
 	input := StructWithLabels{
-		InLabels: labels,
+		Labels: labels,
 	}
 
 	v := &Example{}
@@ -197,7 +196,7 @@ type InvalidDueToNonaddressableContainer struct {
 
 func TestInvalidValueDueToUnaccessibleContainer(t *testing.T) {
 	l := StructWithLabels{
-		InLabels: map[string]string{},
+		Labels: map[string]string{},
 	}
 
 	v := &InvalidDueToNonaddressableContainer{}
@@ -220,7 +219,7 @@ func (wd *WithDiscard) SetLabels(labels map[string]string) {
 
 func TestLabeleeWithDiscard(t *testing.T) {
 	l := StructWithLabels{
-		InLabels: map[string]string{
+		Labels: map[string]string{
 			"will_not_be_in_labels": "discarded_value",
 			"will_be_in_labels":     "kept_value",
 			"unassigned":            "unassigned will be in labels",
@@ -249,7 +248,7 @@ type WithNested struct {
 
 func TestLabeleeWithNestedStruct(t *testing.T) {
 	l := StructWithLabels{
-		InLabels: map[string]string{
+		Labels: map[string]string{
 			"parentfield": "parent-value",
 			"subfield":    "sub-value",
 		},
@@ -270,7 +269,7 @@ func (p *WithNestedStructAsPtr) SetLabels(m map[string]string) {
 }
 func TestLabeleeWithNestedStructAsPtr(t *testing.T) {
 	l := StructWithLabels{
-		InLabels: map[string]string{
+		Labels: map[string]string{
 			"parentfield": "parent-value",
 			"subfield":    "sub-value",
 		},
@@ -293,7 +292,7 @@ func TestFieldPanicRecovery(t *testing.T) {
 
 func TestLabeleeInvalidWithNestedStruct(t *testing.T) {
 	l := StructWithLabels{
-		InLabels: map[string]string{
+		Labels: map[string]string{
 			"parentfield": "parent-value",
 		},
 	}

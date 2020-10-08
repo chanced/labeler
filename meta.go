@@ -47,6 +47,7 @@ type meta struct {
 	value        reflect.Value
 	field        reflect.StructField
 	addr         reflect.Value
+	addrType     reflect.Type
 	ptrValue     reflect.Value
 	ptrType      reflect.Type
 	iface        interface{}
@@ -70,17 +71,20 @@ func newMeta(rv reflect.Value) meta {
 	pkgPath := t.PkgPath()
 
 	m := meta{
-		value: rv,
-		kind:  kind,
-		rtype: t,
-
+		value:    rv,
+		kind:     kind,
+		rtype:    t,
 		typeName: tname,
 		pkgPath:  pkgPath,
 	}
 
 	m.isPtr = m.deref()
-
+	m.typeName = m.rtype.Name()
 	m.canAddr = m.value.CanAddr()
+	if m.canAddr {
+		m.addr = m.value.Addr()
+		m.addrType = m.addr.Type()
+	}
 	m.canSet = m.value.CanSet()
 	m.canInterface = m.value.CanInterface()
 	if m.kind == reflect.Struct {
@@ -166,15 +170,30 @@ func (m meta) NumField() int {
 }
 
 func (m meta) Implements(u reflect.Type) bool {
+	name := m.typeName
+	_ = name
+	uname := u.Name()
+	_ = uname
 	if m.isPtr && m.ptrType.Implements(u) {
 		return true
 	}
-	return m.rtype.Implements(u)
+	if m.rtype.Implements(u) {
+		return true
+	}
+
+	if !m.canAddr {
+		return false
+	}
+	return m.addrType.Implements(u)
 }
 
 func (m meta) Assignable(u reflect.Type) bool {
-
-	return u.AssignableTo(m.rtype)
+	name := m.typeName
+	_ = name
+	uname := u.Name()
+	_ = uname
+	isAssignable := u.AssignableTo(m.rtype)
+	return isAssignable
 }
 
 func (m meta) CanSet() bool {

@@ -162,15 +162,14 @@ var marshalLabeled marshaler = func(r reflected, o Options) marshal {
 }
 
 var marshalMap marshaler = func(r reflected, o Options) marshal {
-	if r.Assignable(mapType) {
+	if !r.Assignable(mapType) {
 		return nil
 	}
 	return func(r reflected, kvs *keyvalues, o Options) error {
-		val := r.Value()
-		if val.IsNil() {
+		if r.Value().IsNil() {
 			return ErrInvalidInput
 		}
-		iter := val.MapRange()
+		iter := r.Value().MapRange()
 		for iter.Next() {
 			k := iter.Key().String()
 			v := iter.Value().String()

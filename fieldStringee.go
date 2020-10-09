@@ -1,7 +1,6 @@
 package labeler
 
 import (
-	"errors"
 	"reflect"
 )
 
@@ -12,14 +11,12 @@ func (setStr fieldStringee) Unmarshaler(r reflected, o Options) unmarshal {
 		return nil
 	}
 	return func(r reflected, kvs *keyvalues, o Options) error {
-		f, ok := r.(*field)
-		if !ok {
-			return errors.New("invalid topic") // this shouldn't happen
-		}
+		f := r.(*field)
 		kv, ok := kvs.Get(f.Key, f.ignoreCase(o))
 		if o.OmitEmpty && !ok {
 			return nil
 		}
+		f.WasSet = true
 		return setStr(f, kv.Value, o)
 	}
 }

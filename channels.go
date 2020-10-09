@@ -78,8 +78,8 @@ func (ch channels) processField(i int) {
 	case f.IsStruct():
 		wch := newChannels(f, ch.options)
 		go wch.processFields()
-		go wch.pipe(ch, f.NumField())
-		wch.waitGroup.Wait()
+		wch.pipe(ch, f.NumField())
+		//wch.waitGroup.Wait()
 	default:
 		ch.fieldCh <- f
 	}

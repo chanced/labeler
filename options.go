@@ -222,7 +222,7 @@ type Options struct {
 	// IntBaseToken sets the token for parsing base for int, int64, int32, int16, int8
 	IntBaseToken string
 
-	tokenParsers tokenParsers
+	tokenParsers tagTokenParsers
 }
 
 // FromTag sets options from t if t is on a container field (either marked as a container with a tag set

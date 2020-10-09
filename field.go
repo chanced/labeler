@@ -321,6 +321,17 @@ func (f *field) setMap(v map[string]string, o Options) error {
 	return nil
 }
 
+func (f *field) ShouldKeep(o Options) bool {
+	if f.Tag.KeepIsSet {
+		return f.Tag.Keep
+	}
+	return o.KeepLabels
+}
+
+func (f *field) ShouldDiscard(o Options) bool {
+	return !f.ShouldKeep(o)
+}
+
 func (f *field) Default(o Options) string {
 	if f.Tag.DefaultIsSet {
 		return f.Tag.Default

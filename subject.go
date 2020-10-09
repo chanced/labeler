@@ -72,11 +72,21 @@ func (sub *subject) Unmarshal(kvs *keyvalues, o Options) error {
 	} else {
 		return ErrMissingContainer
 	}
+	fieldErrs := []*FieldError{}
 	for _, f := range sub.tagged {
 		err := f.Unmarshal(kvs, o)
 		if err != nil {
-			return err
+			fieldErrs = append(fieldErrs, f.err(err))
 		}
+		if f.ShouldDiscard(o) {
+			kvs.Delete(f.Key)
+		}
+		if f.WasSet {
+			f.Save()
+		}
+	}
+	if len(fieldErrs) > 0 {
+		return NewParsingError(fieldErrs)
 	}
 	return unmarshalLabels(sub, kvs, o)
 }

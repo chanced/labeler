@@ -56,26 +56,26 @@ func (my *MyEnum) FromString(s string) error {
 }
 
 type Example struct {
-	Name     string        `label:"name"`
-	Enum     MyEnum        `label:"enum"`
-	Duration time.Duration `label:"duration"`
-	// Time            time.Time     `label:"time, format: 01/02/2006 03:04PM"`
-	Dedupe string `label:"dedupe, discard"`
-	CaSe   string `label:"CaSe, casesensitive"`
-	// FloatWithFormat float64       `label:"FloatWithFormat, format:b"`
-	Float64 float64 `label:"float64"`
-	Float32 float32 `label:"float32"`
-	Int     int     `label:"int"`
-	Int64   int64   `label:"int64"`
-	Int32   int32   `label:"int32"`
-	Int16   int16   `label:"int16"`
-	Int8    int8    `label:"int8"`
-	Bool    bool    `label:"bool"`
-	Uint    uint    `label:"uint"`
-	Uint64  uint64  `label:"uint64"`
-	Uint32  uint32  `label:"uint32"`
-	Uint16  uint16  `label:"uint16"`
-	Uint8   uint8   `label:"uint8"`
+	Name            string        `label:"name"`
+	Enum            MyEnum        `label:"enum"`
+	Duration        time.Duration `label:"duration"`
+	Time            time.Time     `label:"time, format: 01/02/2006 03:04PM"`
+	Dedupe          string        `label:"dedupe, discard"`
+	CaSe            string        `label:"CaSe, casesensitive"`
+	FloatWithFormat float64       `label:"FloatWithFormat, format:b"`
+	Float64         float64       `label:"float64"`
+	Float32         float32       `label:"float32"`
+	Int             int           `label:"int"`
+	Int64           int64         `label:"int64"`
+	Int32           int32         `label:"int32"`
+	Int16           int16         `label:"int16"`
+	Int8            int8          `label:"int8"`
+	Bool            bool          `label:"bool"`
+	Uint            uint          `label:"uint"`
+	Uint64          uint64        `label:"uint64"`
+	Uint32          uint32        `label:"uint32"`
+	Uint16          uint16        `label:"uint16"`
+	Uint8           uint8         `label:"uint8"`
 
 	Labels map[string]string
 }
@@ -109,12 +109,6 @@ func TestEnum(t *testing.T) {
 	v := &ExampleWithEnum{}
 
 	err := Unmarshal(input, v)
-	var pErr *ParsingError
-	if errors.As(err, &pErr) {
-		for _, e := range pErr.Errors {
-			fmt.Println(e)
-		}
-	}
 	assert.NoError(t, err, "Should not have thrown an error")
 	assert.Equal(t, EnumValB, v.Enum, "Enum should be set to EnumValB")
 
@@ -202,6 +196,7 @@ func TestInvalidValueDueToUnaccessibleContainer(t *testing.T) {
 	v := &InvalidDueToNonaddressableContainer{}
 	err := Unmarshal(l, v)
 	assert.Error(t, err)
+	fmt.Println(err)
 	if !errors.Is(err, ErrInvalidInput) {
 		assert.Fail(t, "Error should be ErrInvalidInput")
 	}

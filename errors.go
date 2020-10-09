@@ -92,9 +92,6 @@ func NewFieldErrorWithTag(field string, t *Tag, err error) *FieldError {
 }
 
 func newFieldError(f *field, err error) *FieldError {
-	name := f.Name
-	fmt.Println(name)
-	fmt.Println(f.Tag)
 	return NewFieldErrorWithTag(f.Name, f.Tag, err)
 }
 

@@ -57,7 +57,6 @@ type meta struct {
 	canAddr      bool
 	canSet       bool
 	canInterface bool
-	isStruct     bool
 	marshal      marshal
 	unmarshal    unmarshal
 	// unmarshaler  unmarshaler
@@ -67,6 +66,7 @@ func newMeta(rv reflect.Value) meta {
 	kind := rv.Kind()
 	t := rv.Type()
 	tname := t.Name()
+
 	pkgPath := t.PkgPath()
 
 	m := meta{
@@ -134,6 +134,7 @@ func (m *meta) deref() bool {
 	} else {
 		ptr = m.value.Elem()
 	}
+	m.typeName = ptr.Type().Name()
 	m.ptrValue = m.value
 	m.ptrType = m.rtype
 	m.value = ptr
@@ -149,7 +150,7 @@ func (m *meta) IsStruct() bool {
 }
 
 func (m *meta) save() {
-	if m.isPtr {
+	if m.isPtr && m.ptrValue.CanSet() {
 		m.ptrValue.Set(m.value)
 	}
 }

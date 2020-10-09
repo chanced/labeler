@@ -9,6 +9,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type Labeled struct {
+	Labels map[string]string `label:"*"`
+	Field  string            `label:"field"`
+}
+
+func main() {
+	labels := map[string]string{"field": "val"}
+	labeler.Unmarshal
+}
+
 type StructWithLabels struct {
 	Labels map[string]string
 }

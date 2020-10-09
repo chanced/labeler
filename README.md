@@ -2,11 +2,36 @@
 
 A Go package for marshaling and unmarshaling `map[string]string` with struct tags.
 
+Requires go version 1.13 for `errors.As` and `errors.Is`
+
 ```bash
 go get github.com/chanced/labeler
 ```
 
-Requires go version 1.13 for `errors.As` and `errors.Is`
+```go
+package main
+import (
+    "fmt"
+    "github.com/chanced/labeler"
+)
+
+// The simplest implementation uses a container for labels,
+// denoted with a tag marked as `label:"*"`
+type Struct struct {
+	Labels map[string]string `label:"*"`
+	Field  string            `label:"field"`
+}
+
+func main() {
+	labels := map[string]string{"field": "val"}
+    v := Struct{}
+    labeler.Unmarshal(labels, &v)
+    result, err := labeler.Marshal(&v)
+    for key, value := range labels {
+        fmt.Printf("labels[%s]: %s result[%s]: %s", key, labels[key], key, result[key])
+    }
+}
+```
 
 - [Value: `interface{}` defined](#value-interface-defined)
   - [Fields](#fields)

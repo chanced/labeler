@@ -2,7 +2,7 @@
 
 A Go package for marshaling and unmarshaling `map[string]string` with struct tags.
 
-Requires go version 1.13 for `errors.As` and `errors.Is`
+Requires go version 1.13+ for `errors.As` and `errors.Is`
 
 ```bash
 go get github.com/chanced/labeler
@@ -167,7 +167,7 @@ type Example struct {
 	Uint16          uint16        `label:"uint16"`
 	Uint8           uint8         `label:"uint8"`
 	Nested          NestedExample
-	Labels          map[string]string
+	Labels          map[string]string // SetLabels is used instead of the container
 }
 func (e *Example) SetLabels(l map[string]string) {
 	e.Labels = l

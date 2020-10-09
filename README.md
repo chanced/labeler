@@ -417,8 +417,6 @@ func main() {
 | `IntBaseToken`       |    `"intbase"`    | sets the token for parsing base of `int`, `int64`, `int32`, `int16`, `int8`, at the container or field level                                      | `OptIntBaseToken(v string)`       |
 | `UintBaseToken`      |   `"uintbase"`    | sets the token for parsing base of `uint`, `uint64`, `uint32`, `uint16`, `uint8`, at the container or field level                                 | `OptUintBaseToken(v string)`      |
 
-## Errors
-
 ## Notes
 
 ### Prior Art

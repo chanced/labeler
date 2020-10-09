@@ -16,9 +16,9 @@ func parseToken(t *Tag, s string, o Options) error {
 	s = strings.TrimSpace(s)
 	key := s
 
-	if !o.CaseSensitiveTokens {
-		key = strings.ToLower(key)
-	}
+	// if !o.CaseSensitiveTokens {
+	// 	key = strings.ToLower(key)
+	// }
 
 	tt := tagToken{
 		key:  key,
@@ -93,13 +93,13 @@ var parseCaseSensitive tagTokenParser = func(t *Tag, tt tagToken, o Options) err
 	return t.setIgnoreCase(false)
 }
 
-var parseRequired tagTokenParser = func(t *Tag, tt tagToken, o Options) error {
-	return t.setRequired(true)
-}
+// var parseRequired tagTokenParser = func(t *Tag, tt tagToken, o Options) error {
+// 	return t.setRequired(true)
+// }
 
-var parseNotRquired tagTokenParser = func(t *Tag, tt tagToken, o Options) error {
-	return t.setRequired(false)
-}
+// var parseNotRquired tagTokenParser = func(t *Tag, tt tagToken, o Options) error {
+// 	return t.setRequired(false)
+// }
 
 var parseDiscard tagTokenParser = func(t *Tag, tt tagToken, o Options) error {
 	return t.setKeep(false)

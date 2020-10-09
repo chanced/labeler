@@ -130,15 +130,15 @@ func (t *Tag) setIgnoreCase(v bool) error {
 	return nil
 }
 
-// SetRequired sets the field's or container's Require / RequireAlLFields (respectively) for labels
-func (t *Tag) setRequired(v bool) error {
-	if t.RequiredIsSet {
-		return ErrMalformedTag
-	}
-	t.Required = v
-	t.RequiredIsSet = true
-	return nil
-}
+// // SetRequired sets the field's or container's Require / RequireAlLFields (respectively) for labels
+// func (t *Tag) setRequired(v bool) error {
+// 	if t.RequiredIsSet {
+// 		return ErrMalformedTag
+// 	}
+// 	t.Required = v
+// 	t.RequiredIsSet = true
+// 	return nil
+// }
 
 // SetKeep sets the field's or container's Keep / Discard of labels
 func (t *Tag) setKeep(v bool) error {

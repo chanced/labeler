@@ -47,6 +47,6 @@ func (lbl *Labeler) Marshal(v interface{}) (map[string]string, error) {
 	if err != nil {
 		return kvs.Map(), err
 	}
-	err = sub.Unmarshal(&kvs, o)
+	err = sub.Marshal(&kvs, o)
 	return kvs.Map(), err
 }

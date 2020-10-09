@@ -57,7 +57,7 @@ func newField(parent reflected, i int, o Options) (*field, error) {
 		return f, f.err(ErrUnexportedField)
 	}
 
-	if f.IsTagged && !f.canAddr {
+	if f.IsTagged && !f.canSet {
 		return f, f.err(ErrUnexportedField)
 	}
 
@@ -65,6 +65,7 @@ func newField(parent reflected, i int, o Options) (*field, error) {
 		f.unmarshal = getUnmarshal(f, o)
 		f.marshal = getMarshal(f, o)
 		if f.unmarshal == nil {
+
 			return f, f.err(ErrUnsupportedType)
 		}
 		if f.marshal == nil {
@@ -88,6 +89,10 @@ func (f *field) Marshal(kvs *keyvalues, o Options) error {
 		return f.err(ErrUnsupportedType)
 	}
 	return f.marshal(f, kvs, o)
+}
+
+func (f *field) HasDefault(o Options) bool {
+	return f.Tag != nil && f.Tag.DefaultIsSet
 }
 
 func (f *field) ignoreCase(o Options) bool {

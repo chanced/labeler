@@ -13,11 +13,17 @@ func (setStr fieldStringee) Unmarshaler(r reflected, o Options) unmarshal {
 	return func(r reflected, kvs *keyvalues, o Options) error {
 		f := r.(*field)
 		kv, ok := kvs.Get(f.Key, f.ignoreCase(o))
-		if o.OmitEmpty && !ok {
+
+		var value string
+		if ok {
+			value = kv.Value
+		} else if f.HasDefault(o) {
+			value = f.Default(o)
+		} else if o.OmitEmpty {
 			return nil
 		}
 		f.WasSet = true
-		return setStr(f, kv.Value, o)
+		return setStr(f, value, o)
 	}
 }
 

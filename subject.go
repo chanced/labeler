@@ -90,7 +90,23 @@ func (sub *subject) Unmarshal(kvs *keyvalues, o Options) error {
 }
 
 func (sub *subject) Marshal(kvs *keyvalues, o Options) error {
-	return nil
+	if sub.marshal == nil && (sub.container == nil || sub.container.marshal == nil) {
+		return ErrMissingContainer
+	}
+	fieldErrs := []*FieldError{}
+	for _, f := range sub.tagged {
+		err := f.Marshal(kvs, o)
+		if err != nil {
+			fieldErrs = append(fieldErrs, f.err(err))
+		}
+	}
+	if len(fieldErrs) > 0 {
+		return NewParsingError(fieldErrs)
+	}
+	if sub.marshal != nil {
+		return sub.marshal(sub, kvs, o)
+	}
+	return sub.container.Marshal(kvs, o)
 }
 
 func (sub *subject) Path() string {

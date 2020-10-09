@@ -63,29 +63,22 @@ type meta struct {
 }
 
 func newMeta(rv reflect.Value) meta {
-	kind := rv.Kind()
-	t := rv.Type()
-	tname := t.Name()
-
-	pkgPath := t.PkgPath()
-
 	m := meta{
-		value:    rv,
-		kind:     kind,
-		rtype:    t,
-		typeName: tname,
-		pkgPath:  pkgPath,
+		value: rv,
+		kind:  rv.Kind(),
+		rtype: rv.Type(),
 	}
+	m.canSet = m.value.CanSet()
+	m.canAddr = m.value.CanAddr()
+	m.canInterface = m.value.CanInterface()
 
 	m.isPtr = m.deref()
 	m.typeName = m.rtype.Name()
-	m.canAddr = m.value.CanAddr()
+	m.pkgPath = m.rtype.PkgPath()
 	if m.canAddr {
 		m.addr = m.value.Addr()
 		m.addrType = m.addr.Type()
 	}
-	m.canSet = m.value.CanSet()
-	m.canInterface = m.value.CanInterface()
 	if m.kind == reflect.Struct {
 		m.numField = m.rtype.NumField()
 	}
@@ -134,15 +127,12 @@ func (m *meta) deref() bool {
 	} else {
 		ptr = m.value.Elem()
 	}
-	m.rtype = ptr.Type()
-	m.typeName = m.rtype.Name()
-	m.pkgPath = m.rtype.PkgPath()
 	m.ptrValue = m.value
 	m.ptrType = m.rtype
 	m.value = ptr
-
+	m.rtype = ptr.Type()
 	m.kind = ptr.Kind()
-	m.canAddr = m.value.CanAddr()
+	// m.canAddr = m.value.CanAddr()
 	// if m.kind == reflect.Ptr && !m.isPtrPtr {
 	// 	m.ptrPtrValue = m.ptrValue
 	// 	m.isPtrPtr = true
@@ -157,7 +147,9 @@ func (m *meta) IsStruct() bool {
 }
 
 func (m *meta) save() {
-	if m.isPtr && m.ptrValue.CanSet() {
+
+	if m.isPtr && m.CanSet() {
+
 		m.ptrValue.Set(m.value.Addr())
 	}
 }

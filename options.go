@@ -7,34 +7,34 @@ import (
 
 func getDefaultOptions() Options {
 	o := Options{
-		Tag:                 "label",
-		ContainerToken:      "*",
-		FloatFormat:         'f',
-		ComplexFormat:       'f',
-		IntBase:             10,
-		UintBase:            10,
-		OmitEmpty:           true,
-		IgnoreCase:          true,
-		KeepLabels:          true,
-		DefaultToken:        "default",
-		FormatToken:         "format",
-		FloatFormatToken:    "floatformat",
-		ComplexFormatToken:  "complexformat",
-		TimeFormatToken:     "timeformat",
-		CaseSensitiveToken:  "casesensitive",
-		OmitEmptyToken:      "omitempty",
-		IncludeEmptyToken:   "includeempty",
-		IgnoreCaseToken:     "ignorecase",
-		KeepToken:           "keep",
-		DiscardToken:        "discard",
-		BaseToken:           "base",
-		UintBaseToken:       "uintbase",
-		IntBaseToken:        "intbase",
-		Seperator:           ",",
-		AssignmentStr:       ":",
-		TimeFormat:          "",
-		ContainerField:      "",
-		CaseSensitiveTokens: true,
+		Tag:                "label",
+		ContainerToken:     "*",
+		FloatFormat:        'f',
+		ComplexFormat:      'f',
+		IntBase:            10,
+		UintBase:           10,
+		OmitEmpty:          true,
+		IgnoreCase:         true,
+		KeepLabels:         true,
+		DefaultToken:       "default",
+		FormatToken:        "format",
+		FloatFormatToken:   "floatformat",
+		ComplexFormatToken: "complexformat",
+		TimeFormatToken:    "timeformat",
+		CaseSensitiveToken: "casesensitive",
+		OmitEmptyToken:     "omitempty",
+		IncludeEmptyToken:  "includeempty",
+		IgnoreCaseToken:    "ignorecase",
+		KeepToken:          "keep",
+		DiscardToken:       "discard",
+		BaseToken:          "base",
+		UintBaseToken:      "uintbase",
+		IntBaseToken:       "intbase",
+		Seperator:          ",",
+		AssignmentStr:      ":",
+		TimeFormat:         "",
+		ContainerField:     "",
+		// CaseSensitiveTokens: true,
 		// RequireAllFields:    false,
 		// RequiredToken:       "required",
 		// NotRequiredToken:    "notrequired",
@@ -188,10 +188,10 @@ type Options struct {
 	// LayoutToken is used to assign the format of a field. This is only used for time.Time at the moment.
 	FormatToken string `option:"token"`
 
-	// 	default: true
-	// CaseSensitiveTokens determines whether or not tokens, such as floatformat or uintbase,
-	// can be of any case, such as floatFormat, or UintBase respectively.
-	CaseSensitiveTokens bool
+	// // 	default: true
+	// // CaseSensitiveTokens determines whether or not tokens, such as floatformat or uintbase,
+	// // can be of any case, such as floatFormat, or UintBase respectively.
+	// CaseSensitiveTokens bool
 
 	// 	default: 'f'
 	//FloatFormat is used to determine the format for formatting float fields
@@ -218,9 +218,9 @@ type Options struct {
 	// BaseToken sets the token for parsing base for int, int64, int32, int16, int8, uint, uint64, uint32, uint16, uint8
 	BaseToken string `option:"token"`
 	// UintBaseToken sets the token for parsing base for uint, uint64, uint32, uint16, uint8
-	UintBaseToken string
+	UintBaseToken string `option:"token"`
 	// IntBaseToken sets the token for parsing base for int, int64, int32, int16, int8
-	IntBaseToken string
+	IntBaseToken string `option:"token"`
 
 	tokenParsers tagTokenParsers
 }
@@ -362,6 +362,14 @@ func OptFloatFormat(fmt byte) Option {
 	}
 }
 
+// OptComplexFormat Sets the global ComplexFormat to use in ComplexFloat. Optiosn are 'b', 'e', 'E', 'f', 'g', 'G', 'x', 'X'
+func OptComplexFormat(fmt byte) Option {
+	return func(o *Options) {
+		o.ComplexFormat = fmt
+
+	}
+}
+
 // OptFormatToken sets the token used for indicating format at the field level.
 func OptFormatToken(v string) Option {
 	return func(o *Options) {
@@ -418,6 +426,13 @@ func OptFloatFormatToken(v string) Option {
 	}
 }
 
+// OptComplexFormatToken sets ComplexFormatToken to v
+func OptComplexFormatToken(v string) Option {
+	return func(o *Options) {
+		o.ComplexFormatToken = v
+	}
+}
+
 // OptTimeFormatToken sets TimeFormatToken to v
 func OptTimeFormatToken(v string) Option {
 	return func(o *Options) {
@@ -466,7 +481,7 @@ func newOptions(opts []Option) Options {
 		for _, execOpt := range opts {
 			execOpt(&o)
 		}
-		o.tokenSensitivity()
+		// o.tokenSensitivity()
 		o.tokenParsers = getTokenParsers(o)
 	} else {
 		o.tokenParsers = defaultTokenParsers
@@ -474,24 +489,24 @@ func newOptions(opts []Option) Options {
 	return o
 }
 
-func (o *Options) tokenSensitivity() {
-	if !o.CaseSensitiveTokens {
-		rv := reflect.ValueOf(o)
-		rt := reflect.TypeOf(o)
-		numField := rt.NumField()
-		for i := 0; i < numField; i++ {
-			fv := rv.Field(i)
-			sf := rt.Field(i)
-			if t, tagged := sf.Tag.Lookup("option"); tagged {
-				if t == "token" {
-					v := fv.String()
-					v = strings.ToLower(v)
-					fv.SetString(v)
-				}
-			}
-		}
-	}
-}
+// func (o *Options) tokenSensitivity() {
+// 	if !o.CaseSensitiveTokens {
+// 		rv := reflect.ValueOf(o)
+// 		rt := reflect.TypeOf(o)
+// 		numField := rt.NumField()
+// 		for i := 0; i < numField; i++ {
+// 			fv := rv.Field(i)
+// 			sf := rt.Field(i)
+// 			if t, tagged := sf.Tag.Lookup("option"); tagged {
+// 				if t == "token" {
+// 					v := fv.String()
+// 					v = strings.ToLower(v)
+// 					fv.SetString(v)
+// 				}
+// 			}
+// 		}
+// 	}
+// }
 
 // Validate checks to see if Options are valid, returning an OptionError if not.
 func (o Options) Validate() error {

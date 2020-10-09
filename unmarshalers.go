@@ -66,7 +66,7 @@ func (set unmarshalField) Unmarshaler(r reflected, o Options) unmarshal {
 }
 
 var unmarshalMap unmarshaler = func(r reflected, o Options) unmarshal {
-	if r.Topic() != fieldTopic || !r.Assignable(mapType) {
+	if r.Topic() != fieldTopic || !r.CanSet() || !r.Assignable(mapType) {
 		return nil
 	}
 	var set unmarshalField = func(f *field, kvs *keyvalues, o Options) error {

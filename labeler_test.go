@@ -56,26 +56,34 @@ func (my *MyEnum) FromString(s string) error {
 }
 
 type Example struct {
-	Name            string        `label:"name"`
-	Enum            MyEnum        `label:"enum"`
-	Duration        time.Duration `label:"duration"`
-	Time            time.Time     `label:"time, format: 01/02/2006 03:04PM"`
-	Dedupe          string        `label:"dedupe, discard"`
-	CaSe            string        `label:"CaSe, casesensitive"`
-	FloatWithFormat float64       `label:"FloatWithFormat, format:b"`
-	Float64         float64       `label:"float64"`
-	Float32         float32       `label:"float32"`
-	Int             int           `label:"int"`
-	Int64           int64         `label:"int64"`
-	Int32           int32         `label:"int32"`
-	Int16           int16         `label:"int16"`
-	Int8            int8          `label:"int8"`
-	Bool            bool          `label:"bool"`
-	Uint            uint          `label:"uint"`
-	Uint64          uint64        `label:"uint64"`
-	Uint32          uint32        `label:"uint32"`
-	Uint16          uint16        `label:"uint16"`
-	Uint8           uint8         `label:"uint8"`
+	Name               string        `label:"name"`
+	Enum               MyEnum        `label:"enum"`
+	Duration           time.Duration `label:"duration"`
+	Time               time.Time     `label:"time, format: 01/02/2006 03:04PM"`
+	Time2              time.Time     `label:"time2, timeformat: 01/02/2006 03:04PM"`
+	Dedupe             string        `label:"dedupe, discard"`
+	WithDefault        string        `label:"withdefault, default:defaultvalue"`
+	CaSe               string        `label:"CaSe, casesensitive"`
+	FloatWithFormat    float64       `label:"floatWithFormat, format:b"`
+	FloatWithFormat2   float64       `label:"floatWithFormat, floatformat:b"`
+	Complex128         complex128    `label:"complex128"`
+	Complex64          complex64     `label:"complex64"`
+	ComplexWithFormat  complex64     `label:"complexWithFormat,format:b"`
+	ComplexWithFormat2 complex64     `label:"complexWithFormat,complexformat:b"`
+	Float64            float64       `label:"float64"`
+	Float32            float32       `label:"float32"`
+	Int                int           `label:"int"`
+	IntBinary          int           `label:"intbinary,base:2"`
+	Int64              int64         `label:"int64"`
+	Int32              int32         `label:"int32"`
+	Int16              int16         `label:"int16"`
+	Int8               int8          `label:"int8"`
+	Bool               bool          `label:"bool"`
+	Uint               uint          `label:"uint"`
+	Uint64             uint64        `label:"uint64"`
+	Uint32             uint32        `label:"uint32"`
+	Uint16             uint16        `label:"uint16"`
+	Uint8              uint8         `label:"uint8"`
 
 	Labels map[string]string
 }
@@ -93,47 +101,36 @@ type ExampleWithEnum struct {
 	Labels map[string]string `label:"*"`
 }
 
-func TestEnum(t *testing.T) {
-	labels := map[string]string{
-		"enum": "ValueB",
-	}
-
-	input := StructWithLabels{
-		Labels: labels,
-	}
-
-	v := &ExampleWithEnum{}
-
-	err := Unmarshal(input, v)
-	assert.NoError(t, err, "Should not have thrown an error")
-	assert.Equal(t, EnumValB, v.Enum, "Enum should be set to EnumValB")
-
-}
-
 func TestExample(t *testing.T) {
-
 	labels := map[string]string{
-		"name":            "Archer",
-		"imp":             "important field",
-		"enum":            "ValueB",
-		"int":             "123456789",
-		"int64":           "1234567890",
-		"int32":           "12345",
-		"int16":           "123",
-		"int8":            "1",
-		"bool":            "true",
-		"duration":        "1s",
-		"float64":         "1.1234567890",
-		"float32":         "1.123",
-		"time":            "09/26/2020 10:10PM",
-		"uint":            "1234",
-		"uint64":          "1234567890",
-		"uint32":          "1234567",
-		"uint16":          "123",
-		"uint8":           "1",
-		"FloatWithFormat": "123.234823484",
-		"dedupe":          "Demonstrates that discard is removed from the Labels after field value is set",
-		"case":            "value should not be set due to not matching case",
+		"name":               "Archer",
+		"imp":                "important field",
+		"enum":               "ValueB",
+		"int":                "123456789",
+		"int64":              "1234567890",
+		"int32":              "12345",
+		"int16":              "123",
+		"int8":               "1",
+		"intbinary":          "111",
+		"bool":               "true",
+		"duration":           "1s",
+		"float64":            "1.1234567890",
+		"float32":            "1.123",
+		"complex64":          "3+4i",
+		"complex128":         "3+4i",
+		"time":               "09/26/2020 10:10PM",
+		"time2":              "09/26/2020 10:10PM",
+		"uint":               "1234",
+		"uint64":             "1234567890",
+		"uint32":             "1234567",
+		"uint16":             "123",
+		"uint8":              "1",
+		"floatWithFormat":    "123.234823484",
+		"floatWithFormat2":   "123.234823484",
+		"complexWithFormat":  "123.234823484",
+		"complexWithFormat2": "123.234823484",
+		"dedupe":             "Demonstrates that discard is removed from the Labels after field value is set",
+		"case":               "value should not be set due to not matching case",
 	}
 
 	input := StructWithLabels{
@@ -155,6 +152,7 @@ func TestExample(t *testing.T) {
 	assert.Equal(t, true, v.Bool, "Bool should be set to true")
 	assert.Equal(t, 123456789, v.Int, "Int should be set to 123456789")
 	assert.Equal(t, int8(1), v.Int8, "Int8 should be set to 1")
+	assert.Equal(t, int(7), v.IntBinary, "IntBinary should be set to 7")
 	assert.Equal(t, int16(123), v.Int16, "Int16 should be set to 123")
 	assert.Equal(t, int32(12345), v.Int32, "Int32 should be set to 12345")
 	assert.Equal(t, int64(1234567890), v.Int64, "Int64 should be set to 1234567890")
@@ -166,17 +164,44 @@ func TestExample(t *testing.T) {
 	assert.Equal(t, uint32(1234567), v.Uint32, "Uinit32 should be set to 1234567")
 	assert.Equal(t, uint16(123), v.Uint16, "Unit16 should be set to 123")
 	assert.Equal(t, uint8(1), v.Uint8, "Uint8 should be set to 1")
-
+	assert.Equal(t, "defaultvalue", v.WithDefault, "WithDefault should have been set to defaultvalue per tag")
 	assert.Zero(t, v.CaSe)
 	assert.Equal(t, "Demonstrates that discard is removed from the Labels after field value is set", v.Dedupe)
 	assert.NotContains(t, v.GetLabels(), "dedupe")
-	// assert.Equal(t, time.Date(int(2020), time.September, int(26), int(22), int(10), int(0), int(0), time.UTC), v.Time)
-	// res, err := Marshal(v)
+	assert.Equal(t, time.Date(int(2020), time.September, int(26), int(22), int(10), int(0), int(0), time.UTC), v.Time)
+	assert.Equal(t, time.Date(int(2020), time.September, int(26), int(22), int(10), int(0), int(0), time.UTC), v.Time2)
 
+	res, err := Marshal(v)
+	assert.NoError(t, err)
+	for key, value := range labels {
+		assert.Contains(t, res, key, "marshaled results should contain ", key)
+		v, ok := res[key]
+		if ok {
+			assert.Equal(t, v, value, fmt.Sprintf("%s should equal %s. got %s", key, value, v))
+		}
+
+	}
 	// for key, value := range labels {
 	// 	assert.Contains(t, res, key)
 	// 	assert.Equal(t, value, res[key])
 	// }
+}
+
+func TestEnum(t *testing.T) {
+	labels := map[string]string{
+		"enum": "ValueB",
+	}
+
+	input := StructWithLabels{
+		Labels: labels,
+	}
+
+	v := &ExampleWithEnum{}
+
+	err := Unmarshal(input, v)
+	assert.NoError(t, err, "Should not have thrown an error")
+	assert.Equal(t, EnumValB, v.Enum, "Enum should be set to EnumValB")
+
 }
 
 type InvalidDueToNonaddressableContainer struct {
@@ -304,10 +329,6 @@ func TestLabeleeWithNestedStructAsPtr(t *testing.T) {
 
 }
 
-func TestFieldPanicRecovery(t *testing.T) {
-
-}
-
 func TestLabeleeInvalidWithNestedStruct(t *testing.T) {
 	l := StructWithLabels{
 		Labels: map[string]string{
@@ -317,6 +338,102 @@ func TestLabeleeInvalidWithNestedStruct(t *testing.T) {
 	v := &WithNested{}
 	err := Unmarshal(l, v)
 	assert.Error(t, err)
+
+}
+
+type NumberBaseStruct struct {
+	Labels      map[string]string `label:"*"`
+	BinaryInt1  int               `label:"binaryint1, base:2"`
+	BinaryInt2  int               `label:"binaryint2, intbase:2"`
+	BinaryUint1 uint              `label:"binaryuint1, base:2"`
+	BinaryUint2 uint              `label:"binaryuint2, uintbase:2"`
+}
+
+func TestBinaryNumbers(t *testing.T) {
+
+	labels := map[string]string{
+		"binaryInt1":  "111",
+		"binaryInt2":  "11",
+		"binaryUint1": "111",
+		"binaryUint2": "11",
+	}
+
+	input := StructWithLabels{
+		Labels: labels,
+	}
+	v := &NumberBaseStruct{}
+	err := Unmarshal(input, v)
+	assert.NoError(t, err, "Should not have thrown an error")
+	assert.Equal(t, int(7), v.BinaryInt1, "BinaryInt1 should be set to 7")
+	assert.Equal(t, int(3), v.BinaryInt2, "BinaryInt2 should be set to 3")
+	assert.Equal(t, uint(7), v.BinaryUint1, "BinaryUint1 should be set to7")
+	assert.Equal(t, uint(3), v.BinaryUint2, "BinaryUint2 should be set to 3")
+}
+
+func TestOptionValidation(t *testing.T) {
+	lbl := NewLabeler()
+	err := lbl.ValidateOptions()
+	assert.NoError(t, err)
+
+	lbl = NewLabeler(OptTag(""))
+	err = lbl.ValidateOptions()
+	assert.Error(t, err, "an error should have occurred due to invalid tag")
+
+	lbl = NewLabeler(OptContainerToken(""))
+	err = lbl.ValidateOptions()
+	assert.Error(t, err, "an error should have occurred due to invalid ContainerToken")
+
+	lbl = NewLabeler(OptBaseToken(""))
+	err = lbl.ValidateOptions()
+	assert.Error(t, err, "an error should have occurred due to invalid BaseToken")
+
+	lbl = NewLabeler(OptIntBaseToken(""))
+	err = lbl.ValidateOptions()
+	assert.Error(t, err, "an error should have occurred due to invalid IntBaseToken")
+
+	lbl = NewLabeler(OptUintBaseToken(""))
+	err = lbl.ValidateOptions()
+	assert.Error(t, err, "an error should have occurred due to invalid UintBaseToken")
+
+	lbl = NewLabeler(OptDefaultToken(""))
+	err = lbl.ValidateOptions()
+	assert.Error(t, err, "an error should have occurred due to invalid DefaultToken")
+
+	lbl = NewLabeler(OptDiscardToken(""))
+	err = lbl.ValidateOptions()
+	assert.Error(t, err, "an error should have occurred due to invalid DiscardToken")
+
+	lbl = NewLabeler(OptFloatFormatToken(""))
+	err = lbl.ValidateOptions()
+	assert.Error(t, err, "an error should have occurred due to invalid FloatFormatToken")
+
+	lbl = NewLabeler(OptFormatToken(""))
+	err = lbl.ValidateOptions()
+	assert.Error(t, err, "an error should have occurred due to invalid FormatToken")
+
+	lbl = NewLabeler(OptComplexFormatToken(""))
+	err = lbl.ValidateOptions()
+	assert.Error(t, err, "an error should have occurred due to invalid ComplexFormatToken")
+
+	lbl = NewLabeler(OptIgnoreCaseToken(""))
+	err = lbl.ValidateOptions()
+	assert.Error(t, err, "an error should have occurred due to invalid IgnoreCaseToken")
+
+	lbl = NewLabeler(OptSeperator(""))
+	err = lbl.ValidateOptions()
+	assert.Error(t, err, "an error should have occurred due to invalid Seperator")
+
+	lbl = NewLabeler(OptAssignmentStr(""))
+	err = lbl.ValidateOptions()
+	assert.Error(t, err, "an error should have occurred due to invalid AssignmentStr")
+
+	lbl = NewLabeler(OptTimeFormatToken(""))
+	err = lbl.ValidateOptions()
+	assert.Error(t, err, "an error should have occurred due to invalid TimeFormatToken")
+
+	lbl = NewLabeler(OptCaseSensitiveToken(""))
+	err = lbl.ValidateOptions()
+	assert.Error(t, err, "an error should have occurred due to invalid CaseSensitiveToken")
 
 }
 

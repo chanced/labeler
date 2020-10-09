@@ -1,4 +1,4 @@
-# labeler 🏷️
+# labeler 🏷 [![Go Report Card](https://goreportcard.com/badge/github.com/chanced/labeler)](https://goreportcard.com/report/github.com/chanced/labeler)
 
 ## ⚠️⚠️⚠️ Not ready for usage yet ⚠️⚠️⚠️
 

@@ -26,9 +26,10 @@ func main() {
     labels := map[string]string{"field": "val"}
     v := Struct{}
     labeler.Unmarshal(labels, &v)
+    fmt.Printf("%s : %s", "v.Field", v.Field)
     result, err := labeler.Marshal(&v)
     for key, value := range labels {
-        fmt.Printf("labels[%s]: %s result[%s]: %s", key, labels[key], key, result[key])
+        fmt.Printf("labels[%s]: %s result[%s]: %s\n", key, labels[key], key, result[key])
     }
 }
 ```

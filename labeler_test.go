@@ -9,16 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type Labeled struct {
-	Labels map[string]string `label:"*"`
-	Field  string            `label:"field"`
-}
-
-func main() {
-	labels := map[string]string{"field": "val"}
-	labeler.Unmarshal
-}
-
 type StructWithLabels struct {
 	Labels map[string]string
 }
@@ -227,12 +217,8 @@ func TestInvalidValueDueToUnaccessibleContainer(t *testing.T) {
 	v := &InvalidDueToNonaddressableContainer{}
 	err := Unmarshal(l, v)
 	assert.Error(t, err)
-	fmt.Println(err)
 	var pErr *ParsingError
 	if errors.As(err, &pErr) {
-		for _, e := range pErr.Errors {
-			fmt.Println(e)
-		}
 		if len(pErr.Errors) == 0 {
 			assert.Fail(t, "ParsingError.Errors should contain an ErrUnexportedField for labels")
 		} else {
@@ -295,17 +281,6 @@ func TestLabeleeWithNestedStruct(t *testing.T) {
 
 	v := &WithNested{}
 	err := Unmarshal(l, v)
-	fmt.Println(err)
-	if err != nil {
-		var perr *ParsingError
-
-		if errors.As(err, &perr) {
-			for _, e := range perr.Errors {
-				fmt.Println(e)
-
-			}
-		}
-	}
 	assert.NoError(t, err)
 	assert.Equal(t, "sub-value", v.Nested.SubField)
 }
@@ -336,18 +311,6 @@ func TestLabeleeWithNestedStructAsPtr(t *testing.T) {
 	if v.Nested != nil {
 		assert.Equal(t, "sub-value", v.Nested.SubField)
 	}
-
-}
-
-func TestLabeleeInvalidWithNestedStruct(t *testing.T) {
-	l := StructWithLabels{
-		Labels: map[string]string{
-			"parentfield": "parent-value",
-		},
-	}
-	v := &WithNested{}
-	err := Unmarshal(l, v)
-	assert.Error(t, err)
 
 }
 

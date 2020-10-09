@@ -272,7 +272,7 @@ func OptCaseSensitive() Option {
 	}
 }
 
-// OptContainerField sets the ContainerField. This is overriden if a field contains the tag `label:"*"`
+// OptContainerField sets the ContainerField. This is overridden if a field contains the tag `label:"*"`
 func OptContainerField(field string) Option {
 	return func(o *Options) {
 		o.ContainerField = field

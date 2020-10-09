@@ -23,7 +23,7 @@ type Struct struct {
 }
 
 func main() {
-	labels := map[string]string{"field": "val"}
+    labels := map[string]string{"field": "val"}
     v := Struct{}
     labeler.Unmarshal(labels, &v)
     result, err := labeler.Marshal(&v)

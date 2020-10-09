@@ -419,9 +419,9 @@ func TestOptionValidation(t *testing.T) {
 	err = lbl.ValidateOptions()
 	assert.Error(t, err, "an error should have occurred due to invalid IgnoreCaseToken")
 
-	lbl = NewLabeler(OptSeperator(""))
+	lbl = NewLabeler(OptSeparator(""))
 	err = lbl.ValidateOptions()
-	assert.Error(t, err, "an error should have occurred due to invalid Seperator")
+	assert.Error(t, err, "an error should have occurred due to invalid Separator")
 
 	lbl = NewLabeler(OptAssignmentStr(""))
 	err = lbl.ValidateOptions()

@@ -30,7 +30,7 @@ func getDefaultOptions() Options {
 		BaseToken:          "base",
 		UintBaseToken:      "uintbase",
 		IntBaseToken:       "intbase",
-		Seperator:          ",",
+		Separator:          ",",
 		AssignmentStr:      ":",
 		TimeFormat:         "",
 		ContainerField:     "",
@@ -54,9 +54,9 @@ type Options struct {
 	// Tag is the tag to lookup.
 	Tag string `option:"token"`
 	// 	default: ","
-	// This is the divider / seperator between tag options, configurable in the
+	// This is the divider / separator between tag options, configurable in the
 	// event keys or default values happen to contain ","
-	Seperator string `option:"token"`
+	Separator string `option:"token"`
 	// 	default: true
 	// Determines whether or not to case sensitivity should apply to labels.
 	// this is overridden if `label:"*,ignorecase"` or `label:"*,casesensitive"
@@ -302,11 +302,11 @@ func OptDiscardLabels() Option {
 // 	}
 // }
 
-// OptSeperator sets the Seperator option to s. This allows for tags to have a different seperator string other than ","
+// OptSeparator sets the Separator option to s. This allows for tags to have a different separator string other than ","
 // such as MyField string `label:"mykey|default:has,commas"`
-func OptSeperator(s string) Option {
+func OptSeparator(s string) Option {
 	return func(o *Options) {
-		o.Seperator = s
+		o.Separator = s
 	}
 }
 
@@ -322,7 +322,7 @@ func OptTag(v string) Option {
 // ContainerFlag sets the string to match for a field marking the label container.
 // Using a field level container tag is not mandatory. Implementing an appropriate interface
 // or using a setting is safer as tag settings take precedent over options while some options can not
-// be set at the container tag level (TimeFormat, ContainerFlag, Tag, Seperator)
+// be set at the container tag level (TimeFormat, ContainerFlag, Tag, Separator)
 func OptContainerToken(v string) Option {
 	return func(o *Options) {
 		o.ContainerToken = v

@@ -37,11 +37,11 @@ func newTag(tagStr string, o Options) (*Tag, error) {
 	}
 	tagStr = strings.TrimSpace(tagStr)
 
-	if tagStr == "" || tagStr == o.Seperator {
+	if tagStr == "" || tagStr == o.Separator {
 		return t, ErrMalformedTag
 	}
 
-	tokens := strings.Split(tagStr, o.Seperator)
+	tokens := strings.Split(tagStr, o.Separator)
 	t.Key = strings.TrimSpace(tokens[0])
 
 	if t.Key == o.ContainerToken {

@@ -11,7 +11,7 @@ var (
 	// Primary errors
 
 	// ErrInvalidValue is returned when the value passed in does not satisfy the appropriate interfaces whilst also lacking a container field (configurable or taggable). v must be a non-nil struct
-	ErrInvalidValue = errors.New("value must be apointer to a struct or implement the apporpriate interfaces")
+	ErrInvalidValue = errors.New("value must be apointer to a struct or implement the appropriate interfaces")
 
 	// ErrInvalidInput is returned when the input is not a non-nil pointer to a type implementing Labeled, which is any type that has a GetLabels method that returns a map[string]string, or a map[string]string
 	ErrInvalidInput = errors.New("input must either be a non-nil pointer to a struct implementing Labeled or accessible as a map[string]string")

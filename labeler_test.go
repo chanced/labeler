@@ -89,12 +89,8 @@ func (e *Example) GetLabels() map[string]string {
 }
 
 type ExampleWithEnum struct {
-	Enum   MyEnum `label:"enum"`
-	Labels map[string]string
-}
-
-func (e *ExampleWithEnum) SetLabels(l map[string]string) {
-	e.Labels = l
+	Enum   MyEnum            `label:"enum"`
+	Labels map[string]string `label:"*"`
 }
 
 func TestEnum(t *testing.T) {
@@ -197,8 +193,21 @@ func TestInvalidValueDueToUnaccessibleContainer(t *testing.T) {
 	err := Unmarshal(l, v)
 	assert.Error(t, err)
 	fmt.Println(err)
-	if !errors.Is(err, ErrInvalidInput) {
-		assert.Fail(t, "Error should be ErrInvalidInput")
+	var pErr *ParsingError
+	if errors.As(err, &pErr) {
+		for _, e := range pErr.Errors {
+			fmt.Println(e)
+		}
+		if len(pErr.Errors) == 0 {
+			assert.Fail(t, "ParsingError.Errors should contain an ErrUnexportedField for labels")
+		} else {
+			if !errors.Is(pErr.Errors[0], ErrUnexportedField) {
+				assert.Fail(t, "ParsingError.Errors should contain an ErrUnexportedField for labels")
+			}
+		}
+
+	} else {
+		assert.Fail(t, "err should be a parsing error with")
 	}
 }
 
@@ -232,7 +241,7 @@ func TestLabeleeWithDiscard(t *testing.T) {
 }
 
 type Nested struct {
-	SubField string `label:"subfield,required"`
+	SubField string `label:"subfield"`
 }
 
 type WithNested struct {
@@ -251,6 +260,17 @@ func TestLabeleeWithNestedStruct(t *testing.T) {
 
 	v := &WithNested{}
 	err := Unmarshal(l, v)
+	fmt.Println(err)
+	if err != nil {
+		var perr *ParsingError
+
+		if errors.As(err, &perr) {
+			for _, e := range perr.Errors {
+				fmt.Println(e)
+
+			}
+		}
+	}
 	assert.NoError(t, err)
 	assert.Equal(t, "sub-value", v.Nested.SubField)
 }
@@ -277,7 +297,10 @@ func TestLabeleeWithNestedStructAsPtr(t *testing.T) {
 		t.Log(p.Errors)
 	}
 	assert.NoError(t, err)
-	assert.Equal(t, "sub-value", v.Nested.SubField)
+	assert.NotNil(t, v.Nested)
+	if v.Nested != nil {
+		assert.Equal(t, "sub-value", v.Nested.SubField)
+	}
 
 }
 

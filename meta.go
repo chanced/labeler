@@ -130,17 +130,24 @@ func (m *meta) deref() bool {
 	var ptr reflect.Value
 	if m.value.IsNil() {
 		elem := m.rtype.Elem()
-		ptr = reflect.New(elem)
+		ptr = reflect.New(elem).Elem()
 	} else {
 		ptr = m.value.Elem()
 	}
-	m.typeName = ptr.Type().Name()
+	m.rtype = ptr.Type()
+	m.typeName = m.rtype.Name()
+	m.pkgPath = m.rtype.PkgPath()
 	m.ptrValue = m.value
 	m.ptrType = m.rtype
 	m.value = ptr
-	m.rtype = ptr.Type()
+
 	m.kind = ptr.Kind()
 	m.canAddr = m.value.CanAddr()
+	// if m.kind == reflect.Ptr && !m.isPtrPtr {
+	// 	m.ptrPtrValue = m.ptrValue
+	// 	m.isPtrPtr = true
+	// 	return m.deref()
+	// }
 	return true
 
 }
@@ -151,7 +158,7 @@ func (m *meta) IsStruct() bool {
 
 func (m *meta) save() {
 	if m.isPtr && m.ptrValue.CanSet() {
-		m.ptrValue.Set(m.value)
+		m.ptrValue.Set(m.value.Addr())
 	}
 }
 
@@ -186,12 +193,7 @@ func (m meta) Implements(u reflect.Type) bool {
 }
 
 func (m meta) Assignable(u reflect.Type) bool {
-	name := m.typeName
-	_ = name
-	uname := u.Name()
-	_ = uname
-	isAssignable := u.AssignableTo(m.rtype)
-	return isAssignable
+	return u.AssignableTo(m.rtype)
 }
 
 func (m meta) CanSet() bool {

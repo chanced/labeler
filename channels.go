@@ -56,11 +56,12 @@ func (ch channels) finished() {
 
 func (ch channels) processFields() {
 	defer ch.finished()
+	ch.waitGroup.Add(1)
 	numField := ch.reflected.NumField()
 	for i := 0; i < numField; i++ {
 		go ch.processField(i)
 	}
-	ch.waitGroup.Wait()
+	ch.waitGroup.Done()
 }
 
 func (ch channels) processField(i int) {
@@ -79,7 +80,7 @@ func (ch channels) processField(i int) {
 		wch := newChannels(f, ch.options)
 		go wch.processFields()
 		wch.pipe(ch, f.NumField())
-		//wch.waitGroup.Wait()
+		// wch.waitGroup.Wait()
 	default:
 		ch.fieldCh <- f
 	}

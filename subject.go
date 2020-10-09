@@ -64,12 +64,7 @@ func (sub *subject) Save() {
 }
 
 func (sub *subject) Unmarshal(kvs *keyvalues, o Options) error {
-	var unmarshalLabels unmarshal
-	if sub.unmarshal != nil {
-		unmarshalLabels = sub.unmarshal
-	} else if sub.container != nil {
-		unmarshalLabels = sub.container.unmarshal
-	} else {
+	if sub.unmarshal == nil && (sub.container == nil || sub.container.unmarshal == nil) {
 		return ErrMissingContainer
 	}
 	fieldErrs := []*FieldError{}
@@ -88,7 +83,10 @@ func (sub *subject) Unmarshal(kvs *keyvalues, o Options) error {
 	if len(fieldErrs) > 0 {
 		return NewParsingError(fieldErrs)
 	}
-	return unmarshalLabels(sub, kvs, o)
+	if sub.unmarshal != nil {
+		return sub.unmarshal(sub, kvs, o)
+	}
+	return sub.container.Unmarshal(kvs, o)
 }
 
 func (sub *subject) Marshal(kvs *keyvalues, o Options) error {

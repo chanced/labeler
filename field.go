@@ -108,12 +108,11 @@ func (f *field) parseTag(sf reflect.StructField, o Options) (*Tag, error) {
 
 func (f *field) setIsContainer(o Options) {
 	switch {
-	case f.Tag != nil && f.Tag.Key == o.ContainerToken:
+	case f.Tag != nil && f.Tag.IsContainer:
 		f.IsContainer = true
 	case o.ContainerField != "" && o.ContainerField == f.path:
 		f.IsContainer = true
 	}
-	f.IsContainer = false
 }
 
 func (f *field) Path() string {

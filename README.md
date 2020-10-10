@@ -131,7 +131,7 @@ If you need to change any Option, consider creating an instance of labeler as th
 of extra pre-processing for each call to `Marshal` and `Unmarshal` otherwise.
 
 ```go
-environ := labeler.NewLabeler(Tag("env"))// then use environ.Unmarshal(in, v) and environ.Marshal(v)
+environ := labeler.NewLabeler(OptTag("env"))// then use environ.Unmarshal(in, v) and environ.Marshal(v)
 _ = environ
 ```
 

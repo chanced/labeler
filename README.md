@@ -81,7 +81,7 @@ labeler is fairly flexible when it comes to what all you can tag. It supports th
 | `encoding.TextMarshaler`      | `MarshalText() (text []byte, err error)`                                                                                                                    |   Marshal |
 | `labeler.UnmarshalerWithOpts` | `UnmarshalLabels(v map[string]string, opts Options) error`                                                                                                  | Unmarshal |
 | `labeler.Unmarshaler`         | `UnmarshalLabels(l map[string]string) error`                                                                                                                | Unmarshal |
-| `Stringee`                    | `FromString(s string) error`                                                                                                                                | Unmarshal |
+| `labeler.Stringee`            | `FromString(s string) error`                                                                                                                                | Unmarshal |
 | `encoding.TextUnmarshaler`    | `UnmarshalText(text []byte) error`                                                                                                                          | Unmarshal |
 | `struct`                      | can either implement any of the above interfaces or have fields with tags. Supports `n` level of nesting                                                    |      Both |
 | basic types                   | `string`, `bool`, `int`, `int64`, `int32`, `int16`, `int8`, `float64`, `float32`, `uint`, `uint64`, `uint32`, `uint16`, `uint8`, `complex128`, `complex64`, |      Both |

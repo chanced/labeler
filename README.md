@@ -59,7 +59,7 @@ func main() {
 I am working on a project that is being built on Google Cloud Platform.
 Resources on GCP can have labels, which I use in a number of ways to classify
 and organize with. The responses with the gRPC client come with a
-`GetLabels()map[string]string` methods. This project was built as a means to make
+`GetLabels()map[string]string` method. This project was built as a means to make
 interpreting the `map[string]string` structure into a well-defined `struct`.
 
 ## Value: `interface{}` defined

@@ -36,10 +36,11 @@ func main() {
 }
 ```
 
+- [Motivation](#motivation)
 - [Value: `interface{}` defined](#value-interface-defined)
   - [Fields](#fields)
   - [Labels](#labels)
-- [Input (Unmarshal)](#input-unmarshal)
+- [Unmarshal Input](#input-unmarshal)
 - [Labeler Instance](#labeler-instance)
 - [Examples](#examples)
   - [Basic with accessor / mutator for labels](#basic-example-with-accessor-mutator-for-labels)
@@ -52,6 +53,14 @@ func main() {
 - [Notes](#notes)
   - [Prior Art](#prior-art)
 - [License (MIT)](#license)
+
+## Motivation
+
+I am working on a project that is being built on Google Cloud Platform.
+Resources on GCP can have labels, which I use in a number of ways to classify
+and organize with. The responses with the gRPC client come with a
+`GetLabels()map[string]string` methods. This project was built as a means to make
+interpreting the `map[string]string` structure into a well-defined `struct`.
 
 ## Value: `interface{}` defined
 
@@ -115,6 +124,16 @@ accessing the labels `map[string]string`.
 | `labeler.Labeled`            | `GetLabels() map[string]string`           | [example](#basic-example-with-accessor-mutator-for-labels) |
 | `labeler.GenericallyLabeled` | `GetLabels(tag string) map[string]string` | [example](#example-using-multiple-tags)                    |
 | `map[string]string`          | `map[string]string`                       | [example](#example-using-a-container-tag)                  |
+
+## Labeler Instance
+
+If you need to change any Option, consider creating an instance of labeler as there will be a bit
+of extra pre-processing for each call to `Marshal` and `Unmarshal` otherwise.
+
+```go
+environ := labeler.NewLabeler(Tag("env"))// then use environ.Unmarshal(in, v) and environ.Marshal(v)
+_ = environ
+```
 
 ## Examples
 

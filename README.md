@@ -122,7 +122,7 @@ accessing the labels `map[string]string`.
 | :--------------------------- | :---------------------------------------- | ---------------------------------------------------------- |
 | `labeler.Labeled`            | `GetLabels() map[string]string`           | [example](#basic-example-with-accessor-mutator-for-labels) |
 | `labeler.GenericallyLabeled` | `GetLabels(tag string) map[string]string` | [example](#example-using-multiple-tags)                    |
-| `map[string]string`          | `map[string]string`                       | [example](#example-using-a-container-tag)                  |
+| `map[string]string`          | Any type derived from `map[string]string` | [example](#example-using-a-container-tag)                  |
 
 ## Labeler Instance
 

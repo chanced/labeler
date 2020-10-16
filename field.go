@@ -18,7 +18,7 @@ type field struct {
 	WasSet      bool
 	Keep        bool
 	IsTagged    bool
-	IsContainer bool
+	isContainer bool
 }
 
 func newField(parent reflected, i int, o Options) (*field, error) {
@@ -36,17 +36,16 @@ func newField(parent reflected, i int, o Options) (*field, error) {
 		Name:   fieldName,
 		Parent: parent,
 	}
+	f.path = f.Path()
 	tag, err := f.parseTag(sf, o)
+
 	if err != nil {
 		return f, f.err(err)
 	}
-
 	f.Tag = tag
 	if tag != nil {
 		f.Key = tag.Key
 	}
-
-	f.setIsContainer(o)
 
 	f.meta = newMeta(rv)
 
@@ -60,8 +59,7 @@ func newField(parent reflected, i int, o Options) (*field, error) {
 	if f.IsTagged && !f.canSet {
 		return f, f.err(ErrUnexportedField)
 	}
-
-	if f.IsTagged || f.IsContainer {
+	if f.IsTagged || f.IsContainer(o) {
 		f.unmarshal = getUnmarshal(f, o)
 		f.marshal = getMarshal(f, o)
 		if f.unmarshal == nil {
@@ -111,12 +109,14 @@ func (f *field) parseTag(sf reflect.StructField, o Options) (*Tag, error) {
 	return newTag(tagstr, o)
 }
 
-func (f *field) setIsContainer(o Options) {
+func (f *field) IsContainer(o Options) bool {
 	switch {
-	case f.Tag != nil && f.Tag.IsContainer:
-		f.IsContainer = true
 	case o.ContainerField != "" && o.ContainerField == f.path:
-		f.IsContainer = true
+		return true
+	case f.Tag != nil && f.Tag.IsContainer:
+		return true
+	default:
+		return false
 	}
 }
 
@@ -332,6 +332,18 @@ func (f *field) ShouldKeep(o Options) bool {
 	return o.KeepLabels
 }
 
+func (f *field) OmitEmpty(o Options) bool {
+	if f.Tag != nil {
+		if f.Tag.OmitEmptyIsSet {
+			return true
+		}
+		if f.Tag.IncludeEmptyIsSet {
+			return false
+		}
+	}
+	return o.OmitEmpty
+}
+
 func (f *field) ShouldDiscard(o Options) bool {
 	return !f.ShouldKeep(o)
 }
@@ -350,8 +362,4 @@ func (f *field) Save() {
 
 func (f *field) Topic() topic {
 	return fieldTopic
-}
-
-func (f *field) IsFieldContainer() bool {
-	return f.IsContainer
 }

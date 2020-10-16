@@ -10,7 +10,7 @@ type unmarshalers []unmarshaler
 func getUnmarshal(r reflected, o Options) unmarshal {
 	switch r.Topic() {
 	case fieldTopic:
-		if r.IsFieldContainer() {
+		if r.IsContainer(o) {
 			return containerUnmarshalers.Unmarshaler(r, o)
 		}
 		return fieldUnmarshalers.Unmarshaler(r, o)

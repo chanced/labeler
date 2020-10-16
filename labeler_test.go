@@ -187,6 +187,47 @@ func TestExample(t *testing.T) {
 	// }
 }
 
+func TestInputAsMap(t *testing.T) {
+	v := &Example{}
+	labels := map[string]string{
+		"name":               "Archer",
+		"imp":                "important field",
+		"enum":               "ValueB",
+		"int":                "123456789",
+		"int64":              "1234567890",
+		"int32":              "12345",
+		"int16":              "123",
+		"int8":               "1",
+		"intbinary":          "111",
+		"bool":               "true",
+		"duration":           "1s",
+		"float64":            "1.1234567890",
+		"float32":            "1.123",
+		"complex64":          "3+4i",
+		"complex128":         "3+4i",
+		"time":               "09/26/2020 10:10PM",
+		"time2":              "09/26/2020 10:10PM",
+		"uint":               "1234",
+		"uint64":             "1234567890",
+		"uint32":             "1234567",
+		"uint16":             "123",
+		"uint8":              "1",
+		"floatWithFormat":    "123.234823484",
+		"floatWithFormat2":   "123.234823484",
+		"complexWithFormat":  "123.234823484",
+		"complexWithFormat2": "123.234823484",
+		"dedupe":             "Demonstrates that discard is removed from the Labels after field value is set",
+		"case":               "value should not be set due to not matching case",
+	}
+
+	err := Unmarshal(labels, v)
+	assert.NoError(t, err, "Should not have thrown an error")
+
+	assert.Equal(t, "Archer", v.Name, "Name should be set to \"Archer\"")
+	assert.Equal(t, EnumValB, v.Enum, "Enum should be set to EnumValB")
+
+}
+
 func TestEnum(t *testing.T) {
 	labels := map[string]string{
 		"enum": "ValueB",
@@ -408,6 +449,24 @@ func TestOptionValidation(t *testing.T) {
 	err = lbl.ValidateOptions()
 	assert.Error(t, err, "an error should have occurred due to invalid CaseSensitiveToken")
 
+}
+
+type Private struct {
+	field string
+}
+
+type StructWithPrivateFields struct {
+	Labels  map[string]string `label:"*"`
+	private Private
+	Public  string `label:"public"`
+}
+
+func TestIgnoreUnaccessibleFields(t *testing.T) {
+	l := map[string]string{"public": "value"}
+	priv := &StructWithPrivateFields{}
+	err := Unmarshal(l, priv)
+	assert.NoError(t, err)
+	assert.Equal(t, l["public"], priv.Public)
 }
 
 // type WithValidation struct {

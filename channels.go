@@ -74,9 +74,9 @@ func (ch channels) processField(i int) {
 	switch {
 	case f.IsTagged:
 		ch.fieldCh <- f
-	case f.IsContainer:
+	case f.IsContainer(ch.options):
 		ch.fieldCh <- f
-	case f.IsStruct():
+	case f.IsStruct() && f.canInterface:
 		wch := newChannels(f, ch.options)
 		go wch.processFields()
 		wch.pipe(ch, f.NumField())

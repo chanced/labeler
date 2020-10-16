@@ -54,11 +54,20 @@ func getTokenParsers(o Options) tagTokenParsers {
 		o.UintBaseToken:      parseUintBase,
 		o.BaseToken:          parseBase,
 		o.FormatToken:        parseFormat,
+		o.IncludeEmptyToken:  parseIncludeEmpty,
+		o.OmitEmptyToken:     parseOmitEmpty,
 		// o.RequiredToken:      parseRequired,
 		// o.NotRequiredToken:   parseNotRquired,
 	}
+
 }
 
+var parseIncludeEmpty tagTokenParser = func(t *Tag, tt tagToken, o Options) error {
+	return t.setIncludeEmpty()
+}
+var parseOmitEmpty tagTokenParser = func(t *Tag, tt tagToken, o Options) error {
+	return t.setOmitEmpty()
+}
 var parseBase tagTokenParser = func(t *Tag, tt tagToken, o Options) error {
 	return t.setBase(tt.value)
 }
@@ -68,39 +77,24 @@ var parseUintBase tagTokenParser = func(t *Tag, tt tagToken, o Options) error {
 var parseIntBase tagTokenParser = func(t *Tag, tt tagToken, o Options) error {
 	return t.setIntBase(tt.value)
 }
-
 var parseFloatFormat tagTokenParser = func(t *Tag, tt tagToken, o Options) error {
 	return t.setFloatFormat(tt.value)
 }
-
 var parseDefault tagTokenParser = func(t *Tag, tt tagToken, o Options) error {
 	return t.setDefault(tt.value)
 }
-
 var parseComplexFormat tagTokenParser = func(t *Tag, tt tagToken, o Options) error {
 	return t.setComplexFormat(tt.value)
 }
-
 var parseTimeFormat tagTokenParser = func(t *Tag, tt tagToken, o Options) error {
 	return t.setTimeFormat(tt.value)
 }
-
 var parseIgnoreCase tagTokenParser = func(t *Tag, tt tagToken, o Options) error {
 	return t.setIgnoreCase(false)
 }
-
 var parseCaseSensitive tagTokenParser = func(t *Tag, tt tagToken, o Options) error {
 	return t.setIgnoreCase(false)
 }
-
-// var parseRequired tagTokenParser = func(t *Tag, tt tagToken, o Options) error {
-// 	return t.setRequired(true)
-// }
-
-// var parseNotRquired tagTokenParser = func(t *Tag, tt tagToken, o Options) error {
-// 	return t.setRequired(false)
-// }
-
 var parseDiscard tagTokenParser = func(t *Tag, tt tagToken, o Options) error {
 	return t.setKeep(false)
 }
@@ -110,3 +104,11 @@ var parseKeep tagTokenParser = func(t *Tag, tt tagToken, o Options) error {
 var parseFormat tagTokenParser = func(t *Tag, tt tagToken, o Options) error {
 	return t.setFormat(tt.value)
 }
+
+// var parseRequired tagTokenParser = func(t *Tag, tt tagToken, o Options) error {
+// 	return t.setRequired(true)
+// }
+
+// var parseNotRquired tagTokenParser = func(t *Tag, tt tagToken, o Options) error {
+// 	return t.setRequired(false)
+// }

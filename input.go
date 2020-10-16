@@ -32,7 +32,7 @@ func (in *input) Marshal(kvs *keyvalues, o Options) error {
 	return in.marshal(in, kvs, o)
 }
 
-func (in *input) IsFieldContainer() bool {
+func (in *input) IsContainer(o Options) bool {
 	return false
 }
 

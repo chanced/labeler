@@ -26,9 +26,9 @@ type reflected interface {
 	PkgPath() string
 	IsPtr() bool
 	Kind() reflect.Kind
-	IsFieldContainer() bool
 	Unmarshal(kvs *keyvalues, o Options) error
 	Marshal(kvs *keyvalues, o Options) error
+	IsContainer(o Options) bool
 }
 
 type topic int

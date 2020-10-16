@@ -29,7 +29,7 @@ func (fs *fieldset) processField(f *field, o Options) error {
 	if f == nil {
 		return errors.New("field was nil")
 	}
-	if f.IsContainer {
+	if f.IsContainer(o) {
 		return fs.setContainer(f, o)
 	}
 	if f.IsTagged {

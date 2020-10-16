@@ -7,27 +7,29 @@ import (
 
 // Tag is parsed Struct Tag
 type Tag struct {
-	Raw             string
-	Key             string
-	Default         string
-	IsContainer     bool
-	IgnoreCase      bool
-	Required        bool
-	Keep            bool
-	Format          string
-	TimeFormat      string
-	FloatFormat     byte
-	ComplexFormat   byte
-	Base            int
-	IntBase         int
-	UintBase        int
-	BaseIsSet       bool
-	KeepIsSet       bool
-	UintBaseIsSet   bool
-	IntBaseIsSet    bool
-	IgnoreCaseIsSet bool
-	RequiredIsSet   bool
-	DefaultIsSet    bool
+	Raw               string
+	Key               string
+	Default           string
+	IsContainer       bool
+	IgnoreCase        bool
+	Required          bool
+	Keep              bool
+	Format            string
+	TimeFormat        string
+	FloatFormat       byte
+	ComplexFormat     byte
+	Base              int
+	IntBase           int
+	UintBase          int
+	BaseIsSet         bool
+	KeepIsSet         bool
+	UintBaseIsSet     bool
+	IntBaseIsSet      bool
+	IgnoreCaseIsSet   bool
+	RequiredIsSet     bool
+	DefaultIsSet      bool
+	OmitEmptyIsSet    bool
+	IncludeEmptyIsSet bool
 }
 
 // NewTag creates a new Tag from a string and Options.
@@ -147,6 +149,22 @@ func (t *Tag) setKeep(v bool) error {
 	}
 	t.Keep = v
 	t.KeepIsSet = true
+	return nil
+}
+
+func (t *Tag) setOmitEmpty() error {
+	if t.OmitEmptyIsSet {
+		return ErrMalformedTag
+	}
+	t.OmitEmptyIsSet = true
+	return nil
+}
+
+func (t *Tag) setIncludeEmpty() error {
+	if t.OmitEmptyIsSet {
+		return ErrMalformedTag
+	}
+	t.IncludeEmptyIsSet = true
 	return nil
 }
 

@@ -14,7 +14,7 @@ type marshalField func(f *field, kvs *keyvalues, o Options) error
 func getMarshal(r reflected, o Options) marshal {
 	switch r.Topic() {
 	case fieldTopic:
-		if r.IsFieldContainer() {
+		if r.IsContainer(o) {
 			return containerMarshalers.Marshaler(r, o)
 		}
 		return fieldMarshalers.Marshaler(r, o)

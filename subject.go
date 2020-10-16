@@ -117,6 +117,6 @@ func (sub *subject) Topic() topic {
 	return subjectTopic
 }
 
-func (sub *subject) IsFieldContainer() bool {
+func (sub *subject) IsContainer(o Options) bool {
 	return false
 }

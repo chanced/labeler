@@ -256,6 +256,12 @@ func (o Options) FromTag(t *Tag) Options {
 	if t.IgnoreCaseIsSet {
 		o.IgnoreCase = t.IgnoreCase
 	}
+	if t.OmitEmptyIsSet {
+		o.OmitEmpty = true
+	}
+	if t.IncludeEmptyIsSet {
+		o.OmitEmpty = false
+	}
 	// if t.RequiredIsSet {
 	// 	o.RequireAllFields = t.Required
 	// }

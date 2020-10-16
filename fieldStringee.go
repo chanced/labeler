@@ -19,7 +19,7 @@ func (setStr fieldStringee) Unmarshaler(r reflected, o Options) unmarshal {
 			value = kv.Value
 		} else if f.HasDefault(o) {
 			value = f.Default(o)
-		} else if o.OmitEmpty {
+		} else if f.OmitEmpty(o) {
 			return nil
 		}
 		f.WasSet = true

@@ -180,9 +180,9 @@ type Example struct {
 	Uint64          uint64        `label:"uint64"`
 	Uint32          uint32        `label:"uint32"`
 	Uint16          uint16        `label:"uint16"`
-    Uint8           uint8         `label:"uint8"`
-    StrSlice        []string      `label:"str_slice"`
-    IntArray        [8]int        `label:"int_array"`
+	Uint8           uint8         `label:"uint8"`
+	StrSlice        []string      `label:"str_slice"`
+	IntArray        [8]int        `label:"int_array"`
 	Nested          NestedExample
 	Labels          map[string]string // SetLabels is used instead of the container
 }

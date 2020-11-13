@@ -12,10 +12,15 @@ type subject struct {
 
 func newSubject(v interface{}, o Options) (subject, error) {
 	rv := reflect.ValueOf(v)
+
+	if rv.Kind() != reflect.Ptr {
+		return subject{}, ErrInvalidValue
+	}
 	sub := subject{
 		meta:     newMeta(rv),
 		fieldset: newFieldset(),
 	}
+
 	sub.marshal = getMarshal(&sub, o)
 	sub.unmarshal = getUnmarshal(&sub, o)
 	err := sub.init(o)
@@ -63,7 +68,7 @@ func (sub *subject) Save() {
 	sub.save()
 }
 
-func (sub *subject) Unmarshal(kvs *keyvalues, o Options) error {
+func (sub *subject) Unmarshal(kvs *keyValues, o Options) error {
 	if sub.unmarshal == nil && (sub.container == nil || sub.container.unmarshal == nil) {
 		return ErrMissingContainer
 	}
@@ -74,9 +79,9 @@ func (sub *subject) Unmarshal(kvs *keyvalues, o Options) error {
 			fieldErrs = append(fieldErrs, f.err(err))
 		}
 		if f.ShouldDiscard(o) {
-			kvs.Delete(f.Key)
+			kvs.Delete(f.key)
 		}
-		if f.WasSet {
+		if f.wasSet {
 			f.Save()
 		}
 	}
@@ -89,7 +94,7 @@ func (sub *subject) Unmarshal(kvs *keyvalues, o Options) error {
 	return sub.container.Unmarshal(kvs, o)
 }
 
-func (sub *subject) Marshal(kvs *keyvalues, o Options) error {
+func (sub *subject) Marshal(kvs *keyValues, o Options) error {
 	if sub.marshal == nil && (sub.container == nil || sub.container.marshal == nil) {
 		return ErrMissingContainer
 	}

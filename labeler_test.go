@@ -3,6 +3,7 @@ package labeler
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -65,11 +66,11 @@ type Example struct {
 	WithDefault        string        `label:"withdefault, default:defaultvalue"`
 	CaSe               string        `label:"CaSe, casesensitive"`
 	FloatWithFormat    float64       `label:"floatWithFormat, format:b"`
-	FloatWithFormat2   float64       `label:"floatWithFormat, floatformat:b"`
+	FloatWithFormat2   float64       `label:"floatWithFormat2, floatformat:b"`
 	Complex128         complex128    `label:"complex128"`
 	Complex64          complex64     `label:"complex64"`
 	ComplexWithFormat  complex64     `label:"complexWithFormat,format:b"`
-	ComplexWithFormat2 complex64     `label:"complexWithFormat,complexformat:b"`
+	ComplexWithFormat2 complex64     `label:"complexWithFormat2,complexformat:b"`
 	Float64            float64       `label:"float64"`
 	Float32            float32       `label:"float32"`
 	Int                int           `label:"int"`
@@ -101,10 +102,9 @@ type ExampleWithEnum struct {
 	Labels map[string]string `label:"*"`
 }
 
-func TestExample(t *testing.T) {
+func TestUnmarshalExample(t *testing.T) {
 	labels := map[string]string{
 		"name":               "Archer",
-		"imp":                "important field",
 		"enum":               "ValueB",
 		"int":                "123456789",
 		"int64":              "1234567890",
@@ -170,21 +170,81 @@ func TestExample(t *testing.T) {
 	assert.NotContains(t, v.GetLabels(), "dedupe")
 	assert.Equal(t, time.Date(int(2020), time.September, int(26), int(22), int(10), int(0), int(0), time.UTC), v.Time)
 	assert.Equal(t, time.Date(int(2020), time.September, int(26), int(22), int(10), int(0), int(0), time.UTC), v.Time2)
+	fmt.Println(v)
 
+}
+
+func TestMarshalExample(t *testing.T) {
+	labels := map[string]string{
+		"name":               "Archer",
+		"enum":               "ValueB",
+		"int":                "123456789",
+		"int64":              "1234567890",
+		"int32":              "12345",
+		"int16":              "123",
+		"int8":               "1",
+		"intbinary":          "111",
+		"bool":               "true",
+		"duration":           "1s",
+		"float64":            "1.123456789",
+		"float32":            "1.123",
+		"complex64":          "(3+4i)",
+		"complex128":         "(3+4i)",
+		"time":               "09/26/2020 10:10PM",
+		"time2":              "09/26/2020 10:10PM",
+		"uint":               "1234",
+		"uint64":             "1234567890",
+		"uint32":             "12345",
+		"uint16":             "123",
+		"uint8":              "1",
+		"floatWithFormat":    "8671879767525176p-46",
+		"floatWithFormat2":   "8671879767525176p-46",
+		"complexWithFormat":  "(16152635p-17+0p-149i)",
+		"complexWithFormat2": "(16152635p-17+0p-149i)",
+	}
+	v := &Example{
+		Name:               "Archer",
+		Bool:               true,
+		CaSe:               "",
+		Duration:           1 * time.Second,
+		Enum:               EnumValB,
+		Complex128:         3 + 4i,
+		Complex64:          3 + 4i,
+		Float32:            1.123,
+		Float64:            1.1234567890,
+		Time:               time.Date(int(2020), time.September, int(26), int(22), int(10), int(0), int(0), time.UTC),
+		Time2:              time.Date(int(2020), time.September, int(26), int(22), int(10), int(0), int(0), time.UTC),
+		IntBinary:          7,
+		Int:                123456789,
+		Int64:              1234567890,
+		Int32:              12345,
+		Int16:              123,
+		Int8:               1,
+		Uint8:              1,
+		Uint16:             123,
+		Uint32:             12345,
+		Uint64:             1234567890,
+		Uint:               1234,
+		FloatWithFormat:    123.234823484,
+		FloatWithFormat2:   123.234823484,
+		ComplexWithFormat:  123.234823484,
+		ComplexWithFormat2: 123.234823484,
+	}
 	res, err := Marshal(v)
 	assert.NoError(t, err)
 	for key, value := range labels {
+		fmt.Printf("%-20s %s%30s\n", key, res[key], value)
+	}
+	for key, value := range labels {
 		assert.Contains(t, res, key, "marshaled results should contain ", key)
 		v, ok := res[key]
+
 		if ok {
-			assert.Equal(t, v, value, fmt.Sprintf("%s should equal %s. got %s", key, value, v))
+			assert.Equal(t, v, value, fmt.Sprintf("%s should equal %v. got %s", key, value, v))
 		}
 
 	}
-	// for key, value := range labels {
-	// 	assert.Contains(t, res, key)
-	// 	assert.Equal(t, value, res[key])
-	// }
+
 }
 
 func TestInputAsMap(t *testing.T) {
@@ -203,8 +263,8 @@ func TestInputAsMap(t *testing.T) {
 		"duration":           "1s",
 		"float64":            "1.1234567890",
 		"float32":            "1.123",
-		"complex64":          "3+4i",
-		"complex128":         "3+4i",
+		"complex64":          "(3+4i)",
+		"complex128":         "(3+4i)",
 		"time":               "09/26/2020 10:10PM",
 		"time2":              "09/26/2020 10:10PM",
 		"uint":               "1234",
@@ -382,6 +442,102 @@ func TestBinaryNumbers(t *testing.T) {
 	assert.Equal(t, int(3), v.BinaryInt2, "BinaryInt2 should be set to 3")
 	assert.Equal(t, uint(7), v.BinaryUint1, "BinaryUint1 should be set to7")
 	assert.Equal(t, uint(3), v.BinaryUint2, "BinaryUint2 should be set to 3")
+}
+
+type TestingSlice struct {
+	Strings []string `label:"strings"`
+	Ints    []int    `label:"ints"`
+	ex      string
+	Labels  map[string]string `label:"*"`
+}
+
+func TestUnmarshalSlice(t *testing.T) {
+	s := []string{"zero", "one", "two", "three", "four"}
+	n := []string{"0", "1", "2", "3", "4", "2000"}
+	ni := []int{0, 1, 2, 3, 4, 2000}
+
+	sstr := strings.Join(s, ",")
+	nstr := strings.Join(n, ",")
+	m := map[string]string{"strings": sstr, "ints": nstr}
+	var v TestingSlice
+	err := Unmarshal(m, &v)
+	assert.NoError(t, err)
+	assert.Len(t, v.Strings, 5, "Slice")
+	assert.Len(t, v.Ints, 6, "SliceInts")
+	for i, sv := range s {
+		assert.Equal(t, sv, v.Strings[i])
+	}
+	for i, nv := range ni {
+		assert.Equal(t, nv, v.Ints[i])
+	}
+}
+
+func TestMarshalSlice(t *testing.T) {
+	s := []string{"zero", "one", "two", "three", "four"}
+	n := []string{"0", "1", "2", "3", "4", "2000"}
+	ni := []int{0, 1, 2, 3, 4, 2000}
+
+	sstr := strings.Join(s, ",")
+	istr := strings.Join(n, ",")
+
+	v := TestingSlice{
+		Strings: s,
+		Ints:    ni,
+	}
+
+	mm, err := Marshal(&v)
+	assert.NoError(t, err)
+	assert.Equal(t, mm["strings"], sstr)
+	assert.Equal(t, mm["ints"], istr)
+	fmt.Println(mm)
+}
+
+type TestingArray struct {
+	Strings [5]string         `label:"strings"`
+	Floats  [6]float32        `label:"floats"`
+	Labels  map[string]string `label:"*"`
+}
+
+func TestUnmarshalArray(t *testing.T) {
+	a := [5]string{"zero", "one", "two", "three", "four"}
+	n := []string{"0.1", "1.2", "2.3", "3.4", "4.5", "2000.0123"}
+	nf := [6]float32{0.1, 1.2, 2.3, 3.4, 4.5, 2000.0123}
+
+	astr := strings.Join(a[:], ",")
+	nstr := strings.Join(n, ",")
+	m := map[string]string{"Strings": astr, "floats": nstr}
+	var v TestingArray
+	err := Unmarshal(m, &v)
+	assert.NoError(t, err)
+	assert.Len(t, v.Strings, 5, "Strings")
+	assert.Len(t, v.Floats, 6, "Floats")
+	for i, sv := range a {
+		assert.Equal(t, sv, v.Strings[i])
+	}
+	for i, nv := range nf {
+		assert.Equal(t, nv, v.Floats[i])
+	}
+
+}
+
+func TestMarshalArray(t *testing.T) {
+	a := [5]string{"zero", "one", "two", "three", "four"}
+	n := []string{"0.1", "1.2", "2.3", "3.4", "4.5", "2000.0123"}
+	nf := [6]float32{0.1, 1.2, 2.3, 3.4, 4.5, 2000.0123}
+
+	astr := strings.Join(a[:], ",")
+	nstr := strings.Join(n, ",")
+	v := TestingArray{
+		Strings: a,
+		Floats:  nf,
+		Labels:  map[string]string{},
+	}
+	mm, err := Marshal(&v)
+
+	assert.NoError(t, err)
+
+	assert.Equal(t, astr, mm["strings"])
+	assert.Equal(t, nstr, mm["floats"])
 }
 
 func TestOptionValidation(t *testing.T) {

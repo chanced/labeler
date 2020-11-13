@@ -32,7 +32,7 @@ func (fs *fieldset) processField(f *field, o Options) error {
 	if f.IsContainer(o) {
 		return fs.setContainer(f, o)
 	}
-	if f.IsTagged {
+	if f.isTagged {
 		fs.tagged = append(fs.tagged, f)
 	}
 	return nil
@@ -42,5 +42,5 @@ func (fs *fieldset) containerTag() *Tag {
 	if fs.container == nil {
 		return nil
 	}
-	return fs.container.Tag
+	return fs.container.tag
 }

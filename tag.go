@@ -30,6 +30,7 @@ type Tag struct {
 	DefaultIsSet      bool
 	OmitEmptyIsSet    bool
 	IncludeEmptyIsSet bool
+	Split             string
 }
 
 // NewTag creates a new Tag from a string and Options.
@@ -118,6 +119,13 @@ func (t Tag) GetTimeFormat() (string, bool) {
 	}
 	if t.Format != "" {
 		return t.Format, true
+	}
+	return "", false
+}
+
+func (t Tag) GetSplit() (string, bool) {
+	if t.Split != "" {
+		return t.Split, true
 	}
 	return "", false
 }
@@ -246,3 +254,127 @@ func (t *Tag) setUintBase(s string) error {
 	return nil
 	//int
 }
+
+func (t *Tag) setSplit(s string) error {
+	if len(s) == 0 {
+		return ErrSplitEmpty
+	}
+	t.Split = s
+	return nil
+}
+
+type tagTokenParser func(t *Tag, tt tagToken, o Options) error
+type tagTokenParsers map[string]tagTokenParser
+
+type tagToken struct {
+	key   string //
+	text  string // raw text, whiiiiiiiich, now that I think about it, I need to resolve below.
+	value string // for assignments
+
+}
+
+func parseToken(t *Tag, s string, o Options) error {
+	s = strings.TrimSpace(s)
+	key := s
+
+	// if !o.CaseSensitiveTokens {
+	// 	key = strings.ToLower(key)
+	// }
+
+	tt := tagToken{
+		key:  key,
+		text: s,
+	}
+	i := strings.Index(key, o.AssignmentStr)
+	if i > -1 {
+		tt.key = strings.TrimSpace(key[:i])
+		if i == len(s) {
+			return ErrMalformedTag
+		}
+		tt.value = strings.TrimSpace(s[i+1:])
+	}
+
+	parser := o.tokenParsers[tt.key]
+	if parser == nil {
+		return ErrMalformedTag
+	}
+	return parser(t, tt, o)
+}
+
+func getTokenParsers(o Options) tagTokenParsers {
+	return tagTokenParsers{
+		o.IgnoreCaseToken:    parseIgnoreCase,
+		o.CaseSensitiveToken: parseCaseSensitive,
+		o.DiscardToken:       parseDiscard,
+		o.KeepToken:          parseKeep,
+		o.TimeFormatToken:    parseTimeFormat,
+		o.ComplexFormatToken: parseComplexFormat,
+		o.DefaultToken:       parseDefault,
+		o.FloatFormatToken:   parseFloatFormat,
+		o.IntBaseToken:       parseIntBase,
+		o.UintBaseToken:      parseUintBase,
+		o.BaseToken:          parseBase,
+		o.FormatToken:        parseFormat,
+		o.IncludeEmptyToken:  parseIncludeEmpty,
+		o.OmitEmptyToken:     parseOmitEmpty,
+		o.SplitToken:         parseSplit,
+		// o.RequiredToken:      parseRequired,
+		// o.NotRequiredToken:   parseNotRquired,
+	}
+
+}
+
+var parseSplit = func(t *Tag, tt tagToken, o Options) error {
+	return t.setSplit(tt.value)
+}
+
+var parseIncludeEmpty = func(t *Tag, tt tagToken, o Options) error {
+	return t.setIncludeEmpty()
+}
+var parseOmitEmpty = func(t *Tag, tt tagToken, o Options) error {
+	return t.setOmitEmpty()
+}
+var parseBase = func(t *Tag, tt tagToken, o Options) error {
+	return t.setBase(tt.value)
+}
+var parseUintBase = func(t *Tag, tt tagToken, o Options) error {
+	return t.setUintBase(tt.value)
+}
+var parseIntBase = func(t *Tag, tt tagToken, o Options) error {
+	return t.setIntBase(tt.value)
+}
+var parseFloatFormat = func(t *Tag, tt tagToken, o Options) error {
+	return t.setFloatFormat(tt.value)
+}
+var parseDefault = func(t *Tag, tt tagToken, o Options) error {
+	return t.setDefault(tt.value)
+}
+var parseComplexFormat = func(t *Tag, tt tagToken, o Options) error {
+	return t.setComplexFormat(tt.value)
+}
+var parseTimeFormat = func(t *Tag, tt tagToken, o Options) error {
+	return t.setTimeFormat(tt.value)
+}
+var parseIgnoreCase = func(t *Tag, tt tagToken, o Options) error {
+	return t.setIgnoreCase(false)
+}
+var parseCaseSensitive = func(t *Tag, tt tagToken, o Options) error {
+	return t.setIgnoreCase(false)
+}
+var parseDiscard = func(t *Tag, tt tagToken, o Options) error {
+	return t.setKeep(false)
+}
+var parseKeep = func(t *Tag, tt tagToken, o Options) error {
+	return t.setKeep(true)
+}
+var parseFormat = func(t *Tag, tt tagToken, o Options) error {
+	return t.setFormat(tt.value)
+}
+
+// var parseRequired  = func(t *Tag, tt tagToken, o Options) error {
+// 	return t.setRequired(true)
+// }
+
+// var parseNotRquired  = func(t *Tag, tt tagToken, o Options) error {
+// 	return t.setRequired(false)
+// }

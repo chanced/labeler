@@ -11,7 +11,7 @@ var (
 	// Primary errors
 
 	// ErrInvalidValue is returned when the value passed in does not satisfy the appropriate interfaces whilst also lacking a container field (configurable or taggable). v must be a non-nil struct
-	ErrInvalidValue = errors.New("value must be apointer to a struct or implement the appropriate interfaces")
+	ErrInvalidValue = errors.New("value must be a pointer to a struct or implement the appropriate interfaces")
 
 	// ErrInvalidInput is returned when the input is not a non-nil pointer to a type implementing Labeled, which is any type that has a GetLabels method that returns a map[string]string, or a map[string]string
 	ErrInvalidInput = errors.New("input must either be a non-nil pointer to a struct implementing Labeled or accessible as a map[string]string")
@@ -49,6 +49,8 @@ var (
 	// but has not been set via the tag or Options (TimeFormat)
 	ErrMissingFormat = errors.New("format is required for this field")
 
+	// ErrSplitEmpty is returned when the split string is empty
+	ErrSplitEmpty = errors.New("split can not be empty")
 	// // ErrLabelRequired occurs  when a label is marked as required but not available.
 	// ErrLabelRequired = errors.New("value for this field is required")
 
@@ -92,7 +94,7 @@ func NewFieldErrorWithTag(field string, t *Tag, err error) *FieldError {
 }
 
 func newFieldError(f *field, err error) *FieldError {
-	return NewFieldErrorWithTag(f.Name, f.Tag, err)
+	return NewFieldErrorWithTag(f.name, f.tag, err)
 }
 
 // ParsingError is returned when there are 1 or more errors parsing a value. Check Errors for individual FieldErrors.
@@ -123,7 +125,11 @@ func (err *ParsingError) Unwrap() error {
 
 func (err *ParsingError) Error() string {
 	count, fields := err.getFieldErrors()
-	return fmt.Sprintf("%d %v (%s)", count, ErrParsing, fields)
+	msg := fmt.Sprintf("%d %v (%s)", count, ErrParsing, fields)
+	for _, ferr := range err.Errors {
+		msg = msg + fmt.Sprintf("\n\t%v", ferr)
+	}
+	return msg
 }
 
 // OptionError occurs when there is an in issue with an option.

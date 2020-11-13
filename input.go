@@ -14,6 +14,10 @@ func newInput(v interface{}, o Options) (input, error) {
 	in := input{
 		meta: newMeta(rv),
 	}
+	if in.kind == reflect.Map && in.value.IsNil() {
+		in.value = reflect.New(in.typ).Elem()
+	}
+
 	in.marshal = getMarshal(&in, o)
 	if in.marshal == nil {
 		return in, ErrInvalidInput
@@ -21,11 +25,11 @@ func newInput(v interface{}, o Options) (input, error) {
 	return in, nil
 }
 
-func (in *input) Unmarshal(kvs *keyvalues, o Options) error {
+func (in *input) Unmarshal(kvs *keyValues, o Options) error {
 	return errors.New("cannot unmarshal input")
 }
 
-func (in *input) Marshal(kvs *keyvalues, o Options) error {
+func (in *input) Marshal(kvs *keyValues, o Options) error {
 	if in.marshal == nil {
 		return ErrInvalidInput
 	}

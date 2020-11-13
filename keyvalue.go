@@ -7,14 +7,14 @@ type keyvalue struct {
 	Value string
 }
 
-type keyvalues struct {
+type keyValues struct {
 	lookup map[string]*keyvalue
 	lcase  map[string]*keyvalue
 	m      map[string]string
 }
 
-func newKeyvalues() keyvalues {
-	kvs := keyvalues{
+func newKeyValues() keyValues {
+	kvs := keyValues{
 		lookup: make(map[string]*keyvalue),
 		lcase:  make(map[string]*keyvalue),
 		m:      make(map[string]string),
@@ -22,7 +22,7 @@ func newKeyvalues() keyvalues {
 	return kvs
 }
 
-func (kvs *keyvalues) Get(key string, ignorecase bool) (keyvalue, bool) {
+func (kvs *keyValues) Get(key string, ignorecase bool) (keyvalue, bool) {
 	var kv *keyvalue
 	var ok bool
 	if ignorecase {
@@ -37,24 +37,24 @@ func (kvs *keyvalues) Get(key string, ignorecase bool) (keyvalue, bool) {
 
 }
 
-func (kvs *keyvalues) Set(key string, v string) {
+func (kvs *keyValues) Set(key string, v string) {
 	kv := &keyvalue{Key: key, Value: v}
 	kvs.lookup[key] = kv
 	kvs.lcase[strings.ToLower(key)] = kv
 	kvs.m[key] = v
 }
 
-func (kvs *keyvalues) Map() map[string]string {
+func (kvs *keyValues) Map() map[string]string {
 	return kvs.m
 }
 
-func (kvs *keyvalues) Delete(key string) {
+func (kvs *keyValues) Delete(key string) {
 	delete(kvs.m, key)
 	delete(kvs.lookup, key)
 	delete(kvs.lcase, strings.ToLower(key))
 }
 
-func (kvs *keyvalues) Add(m map[string]string) {
+func (kvs *keyValues) Add(m map[string]string) {
 	if m == nil {
 		return
 	}
@@ -62,6 +62,6 @@ func (kvs *keyvalues) Add(m map[string]string) {
 		kvs.Set(k, v)
 	}
 }
-func (kvs *keyvalues) AddSet(v keyvalues) {
+func (kvs *keyValues) AddSet(v keyValues) {
 	kvs.Add(kvs.Map())
 }

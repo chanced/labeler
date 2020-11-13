@@ -86,6 +86,7 @@ labeler is fairly flexible when it comes to what all you can tag. It supports th
 | basic types                   | `string`, `bool`, `int`, `int64`, `int32`, `int16`, `int8`, `float64`, `float32`, `uint`, `uint64`, `uint32`, `uint16`, `uint8`, `complex128`, `complex64`, |      Both |
 | time                          | `time.Time`, `time.Duration`                                                                                                                                |      Both |
 | pointer                       | pointer to any of the above                                                                                                                                 |      Both |
+| slices & arrays               | slices / arrays composed of any type above                                                                                                                  |      Both |
 
 ### Labels
 
@@ -179,7 +180,9 @@ type Example struct {
 	Uint64          uint64        `label:"uint64"`
 	Uint32          uint32        `label:"uint32"`
 	Uint16          uint16        `label:"uint16"`
-	Uint8           uint8         `label:"uint8"`
+    Uint8           uint8         `label:"uint8"`
+    StrSlice        []string      `label:"str_slice"`
+    IntArray        [8]int        `label:"int_array"`
 	Nested          NestedExample
 	Labels          map[string]string // SetLabels is used instead of the container
 }
@@ -213,7 +216,9 @@ func main() {
 		"FloatWithFormat": "123.234823484",
 		"dedupe":          "Will be removed from the Labels after field value is set",
 		"case":            "value should not be set due to not matching case",
-		"nested_field":    "nested value",
+        "nested_field":    "nested value",
+        "int_array":       "0,1,2,3,4,5,6,7"
+        "str_slice":       "red,blue,green"
 	}
 
 	input := ExampleInput {
@@ -225,19 +230,15 @@ func main() {
 
     if err != nil {
         var pErr *labeler.ParsingError
-        if errors.As(err, &pErr){
+        select {
+        case errors.As(err, &pErr):
             for _, fieldErr := range pErr.Errors {
                 // fieldErr has the field's Name (string) and Tag (labeler.Tag)
                 // as well as Err, the underlying Error which unwraps
-                switch {
-                case errors.Is(fieldErr, ErrMalformedTag):
-                    // something is wrong with the tag
-            //  case ...
-                }
             }
-        } else if errors.Is(err, ErrInvalidInput) {
+        case errors.Is(err, ErrInvalidInput):
+            // bad input
         }
-        // see errors.go for all options
     }
 
     l, err := labeler.Unmarshal(v)
@@ -405,6 +406,7 @@ func main() {
 | :--------------- | :-------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------- |
 | `Tag`            | `"label"` | `Tag` is the name of the tag to lookup. This is especially handy if you have multiple sources of labels                                                                                                                                                                                                                                                                                                               | `OptTag(t string)`                     |
 | `Separator`      |   `","`   | Seperates the tag attributes. Configurable incase you have a tag that contains commas.                                                                                                                                                                                                                                                                                                                                | `OptSeparator(v string)`               |
+| `Split`          |   `","`   | String used to split and join arrays and slices                                                                                                                                                                                                                                                                                                                                                                       | `OptSplit(v string)`                   |
 | `ContainerField` |   `""`    | `ContainerField` determines the field to set and retrieve the labels in the form of `map[string]string`. If `ContainerField` is set, labeler will assume that `GetLabels` and `SetLabels` should not be utilized. To set the `ContainerField` of a nested field, use dot notation (`Root.Labels`). <br>`ContainerField` is not required if `input` implements the appropriate `interface` to retrieve and set labels. | `OptContainerField(s string)`          |
 | `ContainerToken` |   `"*"`   | Used in place of the `ContainerField` option, indicating the container field via tag instead. It must derive from `map[string]string`. This option is only required if you do not wish to implement mutator/accessor interfaces. This can also be used to set some options such as `TimeFormat`, `FloatFormat`, `ComplexFormat`, `CaseSensitive`, `IntBase`, `UintBase` using the appropriate tokens.                 | `OptContainerToken(v string)`          |
 | `AssignmentStr`  |   `":"`   | Used to assign values. This is in the event that a default value needs to contain `":"`                                                                                                                                                                                                                                                                                                                               | `OptAssignmentStr(v string)`           |
@@ -424,6 +426,7 @@ func main() {
 | `KeepToken`          |     `"keep"`      | Token used to set `KeepLabels` to `true`                                                                                                          | `OptKeepToken(v string)`          |
 | `DiscardToken`       |    `"discard"`    | Token used to set `KeepLabels` to `false`                                                                                                         | `OptDiscardToken(v string)`       |
 | `DefaultToken`       |    `"default"`    | Token to provide a default value if one is not set.                                                                                               | `OptDefaultToken(v string)`       |
+| `SplitToken`         |     `"split"`     | Token used to set `Split` to `v`                                                                                                                  | `OptSplitToken(v string)`         |
 | `CaseSensitiveToken` | `"casesensitive"` | Token used to set `IgnoreCase` to `false`                                                                                                         | `OptCaseSensitiveToken(v string)` |
 | `IgnoreCaseToken`    |  `"ignorecase"`   | Token used to determine whether or not to ignore case of the field's (or all fields if on container) key                                          | `OptIgnoreCaseToken(v string)`    |
 | `OmitEmptyToken`     |   `"omitempty"`   | Token used to determine whether or not to assign empty / zero-value labels                                                                        | `OptOmitEmptyToken(v string)`     |

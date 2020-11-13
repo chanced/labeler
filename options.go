@@ -30,10 +30,12 @@ func getDefaultOptions() Options {
 		BaseToken:          "base",
 		UintBaseToken:      "uintbase",
 		IntBaseToken:       "intbase",
+		SplitToken:         "split",
 		Separator:          ",",
 		AssignmentStr:      ":",
 		TimeFormat:         "",
 		ContainerField:     "",
+		Split:              ",",
 		// CaseSensitiveTokens: true,
 		// RequireAllFields:    false,
 		// RequiredToken:       "required",
@@ -57,6 +59,10 @@ type Options struct {
 	// This is the divider / separator between tag options, configurable in the
 	// event keys or default values happen to contain ","
 	Separator string `option:"token"`
+
+	// 	default: ","
+	// What arrays and slices are split on
+	Split string
 	// 	default: true
 	// Determines whether or not to case sensitivity should apply to labels.
 	// this is overridden if `label:"*,ignorecase"` or `label:"*,casesensitive"
@@ -221,8 +227,11 @@ type Options struct {
 	UintBaseToken string `option:"token"`
 	// IntBaseToken sets the token for parsing base for int, int64, int32, int16, int8
 	IntBaseToken string `option:"token"`
+	SplitToken   string `option:"token"`
 
 	tokenParsers tagTokenParsers
+
+	unmarshaling bool
 }
 
 // FromTag sets options from t if t is on a container field (either marked as a container with a tag set
@@ -316,6 +325,13 @@ func OptSeparator(s string) Option {
 	}
 }
 
+// OptSplit sets the Split option to s which is used to split and join arrays.
+func OptSplit(s string) Option {
+	return func(o *Options) {
+		o.Split = s
+	}
+}
+
 // OptTag sets the Tag option to v. This allows for tags to have a different handle other than "label"
 // such as MyField string `lbl:"mykey|default:whatev"`
 func OptTag(v string) Option {
@@ -325,13 +341,21 @@ func OptTag(v string) Option {
 }
 
 // OptContainerToken sets the ContainerToken option to v.
-// ContainerFlag sets the string to match for a field marking the label container.
+// ContainerToken sets the string to match for a field marking the label container.
 // Using a field level container tag is not mandatory. Implementing an appropriate interface
 // or using a setting is safer as tag settings take precedent over options while some options can not
 // be set at the container tag level (TimeFormat, ContainerFlag, Tag, Separator)
 func OptContainerToken(v string) Option {
 	return func(o *Options) {
 		o.ContainerToken = v
+	}
+}
+
+// OptSplitToken sets the ContainerToken option to v.
+// SplitToken sets the string to split / join arrays and slices with.
+func OptSplitToken(v string) Option {
+	return func(o *Options) {
+		o.Split = v
 	}
 }
 

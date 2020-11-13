@@ -5,7 +5,7 @@ import (
 )
 
 type reflected interface {
-	Meta() meta
+	Meta() *meta
 	Save()
 	Topic() topic
 	Path() string
@@ -25,10 +25,20 @@ type reflected interface {
 	TypeName() string
 	PkgPath() string
 	IsPtr() bool
+	PtrValue() reflect.Value
 	Kind() reflect.Kind
-	Unmarshal(kvs *keyvalues, o Options) error
-	Marshal(kvs *keyvalues, o Options) error
+	Unmarshal(kvs *keyValues, o Options) error
+	Marshal(kvs *keyValues, o Options) error
 	IsContainer(o Options) bool
+	ColType() reflect.Type
+	SetValue(reflect.Value)
+	IsArray() bool
+	IsSlice() bool
+	Len() int
+	ColValue() reflect.Value
+	IsElem() bool
+	SetIsElem(bool)
+	deref() bool
 }
 
 type topic int
@@ -42,23 +52,29 @@ const (
 
 //TODO: rename the values below and create interface accessors where applicable
 type meta struct {
-	rtype        reflect.Type
+	typ          reflect.Type
 	kind         reflect.Kind
 	value        reflect.Value
 	field        reflect.StructField
 	addr         reflect.Value
+	ptrType      reflect.Type
+	colValue     reflect.Value
+	colType      reflect.Type
 	addrType     reflect.Type
 	ptrValue     reflect.Value
-	ptrType      reflect.Type
 	typeName     string
 	pkgPath      string
 	numField     int
 	isPtr        bool
+	isArray      bool
+	isSlice      bool
 	canAddr      bool
 	canSet       bool
 	canInterface bool
-	marshal      marshal
-	unmarshal    unmarshal
+	len          int
+	isElem       bool
+	marshal      marshalFunc
+	unmarshal    unmarshalFunc
 	// unmarshaler  unmarshaler
 }
 
@@ -66,21 +82,22 @@ func newMeta(rv reflect.Value) meta {
 	m := meta{
 		value: rv,
 		kind:  rv.Kind(),
-		rtype: rv.Type(),
+		typ:   rv.Type(),
 	}
 	m.canSet = m.value.CanSet()
 	m.canAddr = m.value.CanAddr()
 	m.canInterface = m.value.CanInterface()
-
+	m.checkArraySlice()
 	m.isPtr = m.deref()
-	m.typeName = m.rtype.Name()
-	m.pkgPath = m.rtype.PkgPath()
+
+	m.typeName = m.typ.Name()
+	m.pkgPath = m.typ.PkgPath()
 	if m.canAddr {
 		m.addr = m.value.Addr()
 		m.addrType = m.addr.Type()
 	}
 	if m.kind == reflect.Struct {
-		m.numField = m.rtype.NumField()
+		m.numField = m.typ.NumField()
 	}
 
 	return m
@@ -97,7 +114,19 @@ func (m *meta) Interface() interface{} {
 }
 
 func (m *meta) Type() reflect.Type {
-	return m.rtype
+	return m.typ
+}
+
+func (m *meta) ColType() reflect.Type {
+	return m.colType
+}
+
+func (m *meta) IsElem() bool {
+	return m.isElem
+}
+
+func (m *meta) SetIsElem(v bool) {
+	m.isElem = v
 }
 
 func (m *meta) StoreValue(v reflect.Value) {
@@ -112,8 +141,43 @@ func (m *meta) TypeName() string {
 	return m.typeName
 }
 
+func (m *meta) ColValue() reflect.Value {
+	return m.colValue
+}
+func (m *meta) IsSlice() bool {
+	return m.isSlice
+}
+
+func (m *meta) IsArray() bool {
+	return m.isArray
+}
+
+func (m *meta) Len() int {
+	return m.len
+}
 func (m *meta) Kind() reflect.Kind {
 	return m.kind
+}
+
+func (m *meta) checkArraySlice() bool {
+
+	if m.kind != reflect.Slice && m.kind != reflect.Array {
+		return false
+	}
+
+	m.len = m.value.Len()
+	m.isSlice = m.kind == reflect.Slice
+	m.isArray = m.kind == reflect.Array
+
+	if m.isSlice && m.value.IsNil() {
+		m.value.Set(reflect.New(m.typ).Elem())
+	}
+
+	m.colType = m.typ
+	m.colValue = m.value
+	m.typ = m.typ.Elem()
+	m.kind = m.typ.Kind()
+	return true
 }
 
 func (m *meta) deref() bool {
@@ -122,24 +186,23 @@ func (m *meta) deref() bool {
 	}
 	var ptr reflect.Value
 	if m.value.IsNil() {
-		elem := m.rtype.Elem()
+		elem := m.typ.Elem()
 		ptr = reflect.New(elem).Elem()
 	} else {
 		ptr = m.value.Elem()
 	}
 	m.ptrValue = m.value
-	m.ptrType = m.rtype
+	m.ptrType = m.typ
 	m.value = ptr
-	m.rtype = ptr.Type()
+	m.typ = ptr.Type()
 	m.kind = ptr.Kind()
-	// m.canAddr = m.value.CanAddr()
-	// if m.kind == reflect.Ptr && !m.isPtrPtr {
-	// 	m.ptrPtrValue = m.ptrValue
-	// 	m.isPtrPtr = true
-	// 	return m.deref()
-	// }
+
 	return true
 
+}
+
+func (m *meta) SetValue(rv reflect.Value) {
+	m.value = rv
 }
 
 func (m *meta) IsStruct() bool {
@@ -149,7 +212,6 @@ func (m *meta) IsStruct() bool {
 func (m *meta) save() {
 
 	if m.isPtr && m.CanSet() {
-
 		m.ptrValue.Set(m.value.Addr())
 	}
 }
@@ -158,7 +220,11 @@ func (m *meta) IsPtr() bool {
 	return m.isPtr
 }
 
-func (m meta) Meta() meta {
+func (m *meta) PtrValue() reflect.Value {
+	return m.ptrValue
+}
+
+func (m *meta) Meta() *meta {
 	return m
 }
 
@@ -174,7 +240,7 @@ func (m meta) Implements(u reflect.Type) bool {
 	if m.isPtr && m.ptrType.Implements(u) {
 		return true
 	}
-	if m.rtype.Implements(u) {
+	if m.typ.Implements(u) {
 		return true
 	}
 
@@ -185,7 +251,7 @@ func (m meta) Implements(u reflect.Type) bool {
 }
 
 func (m meta) Assignable(u reflect.Type) bool {
-	return u.AssignableTo(m.rtype)
+	return u.AssignableTo(m.typ)
 }
 
 func (m meta) CanSet() bool {
@@ -219,5 +285,5 @@ func (m meta) StructField(i int) (reflect.StructField, bool) {
 	if i >= m.numField {
 		return reflect.StructField{}, false
 	}
-	return m.rtype.Field(i), true
+	return m.typ.Field(i), true
 }

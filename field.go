@@ -10,14 +10,14 @@ import (
 
 type field struct {
 	meta
-	Tag         *Tag
-	Parent      reflected
-	Name        string
+	tag         *Tag
+	parent      reflected
+	name        string
 	path        string
-	Key         string
-	WasSet      bool
+	key         string
+	wasSet      bool
 	Keep        bool
-	IsTagged    bool
+	isTagged    bool
 	isContainer bool
 }
 
@@ -33,8 +33,8 @@ func newField(parent reflected, i int, o Options) (*field, error) {
 
 	fieldName := sf.Name
 	f := &field{
-		Name:   fieldName,
-		Parent: parent,
+		name:   fieldName,
+		parent: parent,
 	}
 	f.path = f.Path()
 	tag, err := f.parseTag(sf, o)
@@ -42,24 +42,27 @@ func newField(parent reflected, i int, o Options) (*field, error) {
 	if err != nil {
 		return f, f.err(err)
 	}
-	f.Tag = tag
+	f.tag = tag
 	if tag != nil {
-		f.Key = tag.Key
+		f.key = tag.Key
 	}
 
 	f.meta = newMeta(rv)
 
-	if err != nil {
-		return f, f.err(err)
-	}
-	if !f.canAddr && f.IsTagged {
+	if !f.canAddr && f.isTagged {
 		return f, f.err(ErrUnexportedField)
 	}
 
-	if f.IsTagged && !f.canSet {
+	if f.isTagged && !f.canSet {
 		return f, f.err(ErrUnexportedField)
 	}
-	if f.IsTagged || f.IsContainer(o) {
+
+	if f.isTagged || f.IsContainer(o) {
+
+		if f.kind == reflect.Map && f.value.IsNil() {
+			f.value = reflect.New(f.typ).Elem()
+		}
+
 		f.unmarshal = getUnmarshal(f, o)
 		f.marshal = getMarshal(f, o)
 		if f.unmarshal == nil {
@@ -74,14 +77,14 @@ func newField(parent reflected, i int, o Options) (*field, error) {
 	return f, nil
 }
 
-func (f *field) Unmarshal(kvs *keyvalues, o Options) error {
+func (f *field) Unmarshal(kvs *keyValues, o Options) error {
 	if f.unmarshal == nil {
 		// this shouldn't happen. just being safe.
 		return f.err(ErrUnsupportedType)
 	}
 	return f.unmarshal(f, kvs, o)
 }
-func (f *field) Marshal(kvs *keyvalues, o Options) error {
+func (f *field) Marshal(kvs *keyValues, o Options) error {
 	if f.marshal == nil {
 		// this shouldn't happen. just being safe.
 		return f.err(ErrUnsupportedType)
@@ -90,19 +93,19 @@ func (f *field) Marshal(kvs *keyvalues, o Options) error {
 }
 
 func (f *field) HasDefault(o Options) bool {
-	return f.Tag != nil && f.Tag.DefaultIsSet
+	return f.tag != nil && f.tag.DefaultIsSet
 }
 
 func (f *field) ignoreCase(o Options) bool {
-	if f.Tag.IgnoreCaseIsSet {
-		return f.Tag.IgnoreCase
+	if f.tag.IgnoreCaseIsSet {
+		return f.tag.IgnoreCase
 	}
 	return o.IgnoreCase
 }
 
 func (f *field) parseTag(sf reflect.StructField, o Options) (*Tag, error) {
 	tagstr, isTagged := sf.Tag.Lookup(o.Tag)
-	f.IsTagged = isTagged
+	f.isTagged = isTagged
 	if !isTagged {
 		return nil, nil
 	}
@@ -113,7 +116,7 @@ func (f *field) IsContainer(o Options) bool {
 	switch {
 	case o.ContainerField != "" && o.ContainerField == f.path:
 		return true
-	case f.Tag != nil && f.Tag.IsContainer:
+	case f.tag != nil && f.tag.IsContainer:
 		return true
 	default:
 		return false
@@ -124,10 +127,10 @@ func (f *field) Path() string {
 	if f.path != "" {
 		return f.path
 	}
-	if f.Parent.Path() != "" {
-		return fmt.Sprintf("%s.%s", f.Parent.Path(), f.Name)
+	if f.parent.Path() != "" {
+		return fmt.Sprintf("%s.%s", f.parent.Path(), f.name)
 	}
-	return f.Name
+	return f.name
 }
 
 func (f *field) err(err error) *FieldError {
@@ -137,35 +140,42 @@ func (f *field) err(err error) *FieldError {
 	return nil
 }
 
+func (f *field) split(o Options) string {
+	if s, ok := f.tag.GetSplit(); ok {
+		return s
+	}
+	return o.Split
+}
+
 func (f *field) intBase(o Options) int {
-	if base, ok := f.Tag.GetIntBase(); ok {
+	if base, ok := f.tag.GetIntBase(); ok {
 		return base
 	}
 	return o.IntBase
 }
 func (f *field) uintBase(o Options) int {
-	if base, ok := f.Tag.GetUintBase(); ok {
+	if base, ok := f.tag.GetUintBase(); ok {
 		return base
 	}
 	return o.UintBase
 }
 
 func (f *field) floatFormat(o Options) byte {
-	if format, ok := f.Tag.GetFloatFormat(); ok {
+	if format, ok := f.tag.GetFloatFormat(); ok {
 		return format
 	}
 	return o.FloatFormat
 }
 
 func (f *field) complexFormat(o Options) byte {
-	if format, ok := f.Tag.GetComplexFormat(); ok {
+	if format, ok := f.tag.GetComplexFormat(); ok {
 		return format
 	}
 	return o.ComplexFormat
 }
 
 func (f *field) timeFormat(o Options) string {
-	if format, ok := f.Tag.GetTimeFormat(); ok {
+	if format, ok := f.tag.GetTimeFormat(); ok {
 		return format
 	}
 	return o.TimeFormat
@@ -280,7 +290,7 @@ func (f *field) setBool(s string, o Options) error {
 }
 
 func (f *field) formatTime(o Options) (string, error) {
-	if v, ok := f.Interface().(time.Time); ok {
+	if v, ok := f.Interface().(*time.Time); ok {
 		return v.Format(f.timeFormat(o)), nil
 	}
 	return "", nil
@@ -288,7 +298,7 @@ func (f *field) formatTime(o Options) (string, error) {
 
 func (f *field) setTime(s string, o Options) error {
 	if !timeType.AssignableTo(f.Type()) {
-		return f.err(errors.New("Can not assign time.Time to " + f.Name))
+		return f.err(errors.New("Can not assign time.Time to " + f.name))
 	}
 	v, err := time.Parse(f.timeFormat(o), s)
 	if err != nil {
@@ -300,10 +310,12 @@ func (f *field) setTime(s string, o Options) error {
 }
 
 func (f *field) formatDuration(o Options) (string, error) {
-	if v, ok := f.Interface().(time.Duration); ok {
+	switch v := f.Interface().(type) {
+	case *time.Duration:
 		return v.String(), nil
+	default:
+		return "", nil
 	}
-	return "", nil
 
 }
 
@@ -326,18 +338,18 @@ func (f *field) setMap(v map[string]string, o Options) error {
 }
 
 func (f *field) ShouldKeep(o Options) bool {
-	if f.Tag.KeepIsSet {
-		return f.Tag.Keep
+	if f.tag.KeepIsSet {
+		return f.tag.Keep
 	}
 	return o.KeepLabels
 }
 
 func (f *field) OmitEmpty(o Options) bool {
-	if f.Tag != nil {
-		if f.Tag.OmitEmptyIsSet {
+	if f.tag != nil {
+		if f.tag.OmitEmptyIsSet {
 			return true
 		}
-		if f.Tag.IncludeEmptyIsSet {
+		if f.tag.IncludeEmptyIsSet {
 			return false
 		}
 	}
@@ -349,15 +361,15 @@ func (f *field) ShouldDiscard(o Options) bool {
 }
 
 func (f *field) Default(o Options) string {
-	if f.Tag.DefaultIsSet {
-		return f.Tag.Default
+	if f.tag.DefaultIsSet {
+		return f.tag.Default
 	}
 	return o.Default
 }
 
 func (f *field) Save() {
 	f.save()
-	f.Parent.Save()
+	f.parent.Save()
 }
 
 func (f *field) Topic() topic {

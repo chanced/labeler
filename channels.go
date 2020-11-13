@@ -72,7 +72,7 @@ func (ch channels) processField(i int) {
 		return
 	}
 	switch {
-	case f.IsTagged:
+	case f.isTagged:
 		ch.fieldCh <- f
 	case f.IsContainer(ch.options):
 		ch.fieldCh <- f

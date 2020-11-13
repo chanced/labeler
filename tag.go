@@ -123,6 +123,7 @@ func (t Tag) GetTimeFormat() (string, bool) {
 	return "", false
 }
 
+// GetSplit returns the tag's split string
 func (t Tag) GetSplit() (string, bool) {
 	if t.Split != "" {
 		return t.Split, true

@@ -61,6 +61,8 @@ labels, which I use in a number of ways to classify and organize with. The gRPC
 client responses come with a `GetLabels()map[string]string` method. This project
 was built as a means to interpret `map[string]string` into a well-defined `struct`.
 
+The package has worked really well for config values coming in from Environ & elsewhere.
+
 ## Value: `interface{}` defined
 
 Both Marshal and Unmarshal accept `v interface{}`, the value to marshal from or unmarshal

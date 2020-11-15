@@ -226,12 +226,16 @@ var unmarshalArray = func(r reflected, o Options) unmarshalFunc {
 	r.SetIsElem(true)
 	defer r.SetIsElem(false)
 
+	r.PrepCollection()
+	defer r.ResetCollection()
+
 	fn := collectionUnmarshalers.Unmarshaler(r, o)
 	if fn == nil {
 		return nil
 	}
 
 	return func(r reflected, kvs *keyValues, o Options) error {
+		r.PrepCollection()
 		defer r.ResetCollection()
 
 		f := r.(*field)

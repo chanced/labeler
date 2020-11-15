@@ -39,6 +39,7 @@ type reflected interface {
 	IsElem() bool
 	SetIsElem(bool)
 	deref() bool
+	PrepCollection()
 	ResetCollection()
 	ColElemKind() reflect.Kind
 	ColElemType() reflect.Type
@@ -186,6 +187,10 @@ func (m *meta) checkArraySlice() bool {
 		m.value.Set(reflect.New(m.typ).Elem())
 	}
 
+	return true
+}
+
+func (m *meta) PrepCollection() {
 	m.colType = m.typ
 	m.colValue = m.value
 	m.colKind = m.kind
@@ -194,7 +199,6 @@ func (m *meta) checkArraySlice() bool {
 	m.kind = m.typ.Kind()
 	m.colElemKind = m.kind
 	m.colElemType = m.typ
-	return true
 }
 
 func (m *meta) ResetCollection() {

@@ -153,6 +153,9 @@ var marshalArrayOrSlice = func(r reflected, o Options) marshalFunc {
 	r.SetIsElem(true)
 	defer r.SetIsElem(false)
 
+	r.PrepCollection()
+	defer r.ResetCollection()
+
 	fn := collectionMarshalers.Marshaler(r, o)
 
 	if fn == nil {
@@ -160,6 +163,7 @@ var marshalArrayOrSlice = func(r reflected, o Options) marshalFunc {
 	}
 
 	return func(r reflected, kvs *keyValues, o Options) error {
+		r.PrepCollection()
 		defer r.ResetCollection()
 
 		f := r.(*field)

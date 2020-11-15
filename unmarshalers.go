@@ -24,12 +24,12 @@ func getUnmarshal(r reflected, o Options) unmarshalFunc {
 }
 
 var fieldUnmarshalers = unmarshalerFuncs{
+	unmarshalSlice,
+	unmarshalArray,
 	unmarshalUnmarshalerWithOpts,
 	unmarshalUnmarshaler,
 	unmarshalFieldPkgString,
 	unmarshalFieldStringee,
-	unmarshalSlice,
-	unmarshalArray,
 	unmarshalFieldTextUnmarshaler,
 	unmarshalFieldString,
 }
@@ -146,7 +146,7 @@ var unmarshalFieldStringee = func(r reflected, o Options) unmarshalFunc {
 		return nil
 	}
 	var fstr fieldStrUnmarshalFunc = func(f *field, s string, o Options) error {
-		u := r.Interface().(Stringee)
+		u := f.Interface().(Stringee)
 		u.FromString(s)
 		return nil
 	}
@@ -232,7 +232,7 @@ var unmarshalArray = func(r reflected, o Options) unmarshalFunc {
 	}
 
 	return func(r reflected, kvs *keyValues, o Options) error {
-		defer r.SetValue(r.ColValue())
+		defer r.ResetCollection()
 
 		f := r.(*field)
 		strs, hasVal := splitFieldValue(f, kvs, o)
@@ -266,7 +266,7 @@ var unmarshalSlice = func(r reflected, o Options) unmarshalFunc {
 	}
 
 	return func(r reflected, kvs *keyValues, o Options) error {
-		defer r.SetValue(r.ColValue())
+		defer r.ResetCollection()
 
 		f := r.(*field)
 		strs, hasVal := splitFieldValue(f, kvs, o)

@@ -39,6 +39,9 @@ type reflected interface {
 	IsElem() bool
 	SetIsElem(bool)
 	deref() bool
+	ResetCollection()
+	ColElemKind() reflect.Kind
+	ColElemType() reflect.Type
 }
 
 type topic int
@@ -60,6 +63,9 @@ type meta struct {
 	ptrType      reflect.Type
 	colValue     reflect.Value
 	colType      reflect.Type
+	colKind      reflect.Kind
+	colElemType  reflect.Type
+	colElemKind  reflect.Kind
 	addrType     reflect.Type
 	ptrValue     reflect.Value
 	typeName     string
@@ -101,6 +107,13 @@ func newMeta(rv reflect.Value) meta {
 	}
 
 	return m
+}
+func (m *meta) ColElemKind() reflect.Kind {
+	return m.colElemKind
+}
+
+func (m *meta) ColElemType() reflect.Type {
+	return m.colElemType
 }
 
 func (m *meta) Interface() interface{} {
@@ -175,9 +188,23 @@ func (m *meta) checkArraySlice() bool {
 
 	m.colType = m.typ
 	m.colValue = m.value
+	m.colKind = m.kind
+	m.value = reflect.New(m.typ).Elem()
 	m.typ = m.typ.Elem()
 	m.kind = m.typ.Kind()
+	m.colElemKind = m.kind
+	m.colElemType = m.typ
 	return true
+}
+
+func (m *meta) ResetCollection() {
+	if !m.isArray && !m.isSlice {
+		return
+	}
+	m.typ = m.colType
+	m.kind = m.colKind
+	m.value = m.colValue
+
 }
 
 func (m *meta) deref() bool {
@@ -270,7 +297,7 @@ func (m meta) Value() reflect.Value {
 }
 
 func (m meta) ValueField(i int) (reflect.Value, bool) {
-	if m.kind != reflect.Struct {
+	if m.kind != reflect.Struct && m.value.Kind() != reflect.Struct {
 		return reflect.Value{}, false
 	}
 	if i >= m.numField {

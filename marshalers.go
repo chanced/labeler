@@ -27,11 +27,11 @@ func getMarshal(r reflected, o Options) marshalFunc {
 }
 
 var fieldMarshalers = marshalerFuncs{
+	marshalArrayOrSlice,
 	marshalMarshalerWithOpts,
 	marshalMarshaler,
 	marshalFieldPkgString,
 	marshalFieldStringer,
-	marshalArrayOrSlice,
 	marshalFieldTextMarshaler,
 	marshalFieldString,
 }
@@ -160,7 +160,7 @@ var marshalArrayOrSlice = func(r reflected, o Options) marshalFunc {
 	}
 
 	return func(r reflected, kvs *keyValues, o Options) error {
-		defer r.SetValue(r.ColValue())
+		defer r.ResetCollection()
 
 		f := r.(*field)
 		strs := []string{}

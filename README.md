@@ -216,9 +216,9 @@ func main() {
 		"FloatWithFormat": "123.234823484",
 		"dedupe":          "Will be removed from the Labels after field value is set",
 		"case":            "value should not be set due to not matching case",
-        "nested_field":    "nested value",
-        "int_array":       "0,1,2,3,4,5,6,7"
-        "str_slice":       "red,blue,green"
+		"nested_field":    "nested value",
+		"int_array":       "0,1,2,3,4,5,6,7"
+		"str_slice":       "red,blue,green"
 	}
 
 	input := ExampleInput {

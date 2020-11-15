@@ -444,6 +444,23 @@ func TestBinaryNumbers(t *testing.T) {
 	assert.Equal(t, uint(3), v.BinaryUint2, "BinaryUint2 should be set to 3")
 }
 
+type TestingSliceWithDefaultAndSplit struct {
+	Slice  []int             `label:"strings,default:1|2|3,split:|"`
+	Labels map[string]string `label:"*"`
+}
+
+func TestUnmarshalSliceWithDefault(t *testing.T) {
+	v := new(TestingSliceWithDefaultAndSplit)
+	in := make(map[string]string)
+
+	err := Unmarshal(in, v)
+	assert.NoError(t, err)
+	assert.Contains(t, v.Slice, 1)
+	assert.Contains(t, v.Slice, 2)
+	assert.Contains(t, v.Slice, 3)
+
+}
+
 type TestingSlice struct {
 	Strings []string `label:"strings"`
 	Ints    []int    `label:"ints"`

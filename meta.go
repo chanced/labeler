@@ -186,19 +186,20 @@ func (m *meta) checkArraySlice() bool {
 	if m.isSlice && m.value.IsNil() {
 		m.value.Set(reflect.New(m.typ).Elem())
 	}
+	m.colType = m.typ
+	m.colValue = m.value
+	m.colKind = m.kind
 
 	return true
 }
 
 func (m *meta) PrepCollection() {
-	m.colType = m.typ
-	m.colValue = m.value
-	m.colKind = m.kind
 	m.value = reflect.New(m.typ).Elem()
 	m.typ = m.typ.Elem()
 	m.kind = m.typ.Kind()
 	m.colElemKind = m.kind
 	m.colElemType = m.typ
+	m.isElem = true
 }
 
 func (m *meta) ResetCollection() {
@@ -208,7 +209,7 @@ func (m *meta) ResetCollection() {
 	m.typ = m.colType
 	m.kind = m.colKind
 	m.value = m.colValue
-
+	m.isElem = false
 }
 
 func (m *meta) deref() bool {

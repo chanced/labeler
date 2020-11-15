@@ -261,8 +261,9 @@ var unmarshalSlice = func(r reflected, o Options) unmarshalFunc {
 	if !r.IsSlice() || r.ColType().Implements(stringeeType) || r.IsElem() {
 		return nil
 	}
-	r.SetIsElem(true)
-	defer r.SetIsElem(false)
+
+	r.PrepCollection()
+	defer r.ResetCollection()
 
 	fn := collectionUnmarshalers.Unmarshaler(r, o)
 	if fn == nil {
@@ -270,8 +271,8 @@ var unmarshalSlice = func(r reflected, o Options) unmarshalFunc {
 	}
 
 	return func(r reflected, kvs *keyValues, o Options) error {
+		r.PrepCollection()
 		defer r.ResetCollection()
-
 		f := r.(*field)
 		strs, hasVal := splitFieldValue(f, kvs, o)
 		if !hasVal {
